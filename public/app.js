@@ -2,7 +2,7 @@
  *  RPB Law Firm · Urban Golf Weekend — portrait kiosk
  *  Flow: attract → photo (camera or placeholder) → golf-ball print
  *        → business assessment → thank you / reset
- *  DEMO-006 internal. English. No Gemini. No staff email. No phone.
+ *  DEMO-006 internal. English. OpenAI guest image generation. No staff email. No phone.
  * ================================================================ */
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -305,19 +305,25 @@ const booth = (() => {
     }
   }
 
-  async function optionalPolish(blob) {
+  async function generateGuestImage(blob) {
     if (!state.health?.openai) return blob;
+    showErr("Creating your Urban Golf portrait…");
     try {
       const fd = new FormData();
       fd.append("image", blob, "capture.jpg");
       const r = await fetch("/api/banana", { method: "POST", body: fd });
       const ctype = r.headers.get("content-type") || "";
       if (!r.ok) return blob;
-      if (ctype.includes("application/json")) return blob;
+      if (ctype.includes("application/json")) {
+        showErr("");
+        return blob;
+      }
       const polished = await r.blob();
       if (!polished || !polished.size) return blob;
+      showErr("");
       return polished;
     } catch (_) {
+      showErr("");
       return blob;
     }
   }
@@ -346,8 +352,8 @@ const booth = (() => {
         blob = await captureLive();
         state.usedPlaceholder = false;
       }
+      blob = await generateGuestImage(blob);
       blob = await frameOverlay(blob);
-      blob = await optionalPolish(blob);
       state.photoBlob = blob;
       showStill(blob);
       await stopCam();

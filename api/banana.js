@@ -1,5 +1,5 @@
 /**
- * Optional OpenAI image polish for the captured portrait.
+ * OpenAI image generation for the captured guest portrait.
  * NO Gemini. If OPENAI_API_KEY is missing, return 200 { skipped: true }
  * so the kiosk can keep the captured or placeholder photo.
  *
@@ -19,11 +19,13 @@ function setCors(res) {
 }
 
 const PROMPT = [
-  "Polish the FIRST input photo as a refined RPB Law Firm Urban Golf Weekend portrait.",
-  "Keep every person's face, hair, skin tone, age, and identity clearly recognizable.",
-  "Subtle clubhouse / fairway light. Do not invent logos, addresses, or other exhibitor brands.",
-  "Optional thin cream-and-oxblood typographic lockup text only: RPB LAW FIRM.",
-  "No Gemini styling. No extra people. Portrait 9:16. No phone numbers.",
+  "Create a photorealistic editorial event portrait using the FIRST input photo as the identity reference for the guest.",
+  "Make the guest clearly recognizable: preserve their face, skin tone, hair, age, body proportions, and natural expression.",
+  "Place that guest as a stylish golfer on a premium rooftop putting green at sunset overlooking Miami Beach and the ocean, matching the supplied Urban Golf Weekend reference direction.",
+  "Use warm golden-hour light, vivid blue sky, palm trees, a luxury beachfront hotel skyline, tasteful golf clothing, and a confident approachable event-photo composition.",
+  "The guest is the only person in the generated image. Do not add celebrities, invented people, phone numbers, addresses, or unrelated brands.",
+  "Include only the exact readable brand text RPB LAW FIRM if any text is rendered; avoid other prominent text or signage.",
+  "Portrait 2:3 output, polished but natural, realistic hands and golf equipment, no collage, no illustration, no Gemini styling.",
 ].join(" ");
 
 async function openaiEdit({ apiKey, model, size, quality, prompt, fileBuffer, mimeType, filename }) {

@@ -11,7 +11,7 @@ Closest pattern: [turespana-imex-kiosk](https://github.com/Powerwyze/turespana-i
 ## Guest flow (~60–90s)
 
 1. **Attract** (first screen — the kiosk, not a landing page): Urban Golf Weekend · RPB Law Firm · Eden Roc · Sep 5 2026. Tap to start.
-2. **Photo booth**: camera capture with graceful fallback if no camera. Optional clubhouse/golf frame + typographic **RPB LAW FIRM** lockup. OpenAI polish is optional; if `OPENAI_API_KEY` is missing the captured or placeholder photo still shows.
+2. **Photo booth**: camera capture with graceful fallback if no camera. When `OPENAI_API_KEY` is configured, OpenAI creates a photorealistic Miami rooftop Urban Golf portrait using the guest photo as the identity reference. If the key is missing or generation fails, the captured or branded placeholder photo still shows.
 3. **Golf ball print**: CSS/canvas preview with RPB lockup on the ball. Guest enters a 12-character print line. **Print ball** confirms a **simulated** print job (no hardware) and shows a queue id.
 4. **Business assessment** (required): name, company, email, role, what they need help with (IP / corporate / litigation / other + free text), consent.
 5. **Thank you / reset**. Optional photo email if WYZER SMTP env is present; otherwise skip send and keep the lead.
@@ -61,7 +61,7 @@ vercel.json
 | --- | --- | --- |
 | `GET` | `/api/health` | `{ ok: true }` + which env **names** are present (booleans, never values). Also `openai` / `smtp` booleans. |
 | `POST` | `/api/lead` | Capture assessment. Succeeds without Supabase or SMTP. |
-| `POST` | `/api/banana` | Optional OpenAI polish. If the key is missing, `{ skipped: true }` — kiosk keeps the capture. |
+| `POST` | `/api/banana` | OpenAI guest portrait generation. If the key is missing, `{ skipped: true }` — kiosk keeps the capture. |
 | `POST` | `/api/send-photo` | Optional guest photo email. Skips cleanly if SMTP env is missing. Never emails staff. |
 
 Lead JSON: `{ name, company, email, role, needHelp, needHelpOther, consent: true, printLine, printQueueId }`.
