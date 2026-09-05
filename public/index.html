@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#F3E6D0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>RPB Law Firm · Urban Golf Weekend</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="icon" href="/assets/lockup.svg" type="image/svg+xml" />
+</head>
+<body class="kiosk-portrait">
+
+  <div class="bg" aria-hidden="true"></div>
+  <div class="bg__grain" aria-hidden="true"></div>
+
+  <div class="rotate-warn" aria-hidden="true">
+    <div class="rotate-warn__icon">↻</div>
+    <div class="rotate-warn__title">Please rotate to portrait</div>
+    <div class="rotate-warn__sub">This experience is designed for a 1080×1920 portrait kiosk.</div>
+  </div>
+
+  <div class="app">
+
+    <header class="topbar" role="banner">
+      <div class="brand" aria-label="RPB Law Firm">
+        <div class="brand__lockup">RPB LAW FIRM</div>
+      </div>
+      <div class="event-meta">
+        <span class="event-meta__day">URBAN GOLF WEEKEND</span>
+        <span class="event-meta__loc">Eden Roc Miami Beach · Sep 5 2026</span>
+      </div>
+    </header>
+
+    <div class="badge-row">
+      <span class="pill pill--ox">INTERNAL · DEMO-006</span>
+      <span class="pill">CORPORATE ACTIVATION</span>
+    </div>
+
+    <ol class="steps" aria-label="How it works" id="stepsBar">
+      <li class="steps__item is-active" data-step="attract"><b>1</b> Start</li>
+      <li class="steps__item" data-step="booth"><b>2</b> Photo</li>
+      <li class="steps__item" data-step="ball"><b>3</b> Ball</li>
+      <li class="steps__item" data-step="lead"><b>4</b> Lead</li>
+    </ol>
+
+    <main class="stage" role="main">
+
+      <section class="screen screen--attract is-active" id="screenAttract" aria-hidden="false">
+        <button class="attract" id="attractStart" type="button">
+          <div class="attract__rule" aria-hidden="true"></div>
+          <p class="attract__eyebrow">Urban Golf Weekend</p>
+          <h1 class="attract__lockup">RPB LAW FIRM</h1>
+          <p class="attract__venue">Eden Roc Miami Beach</p>
+          <p class="attract__date">Sep 5 2026</p>
+          <div class="attract__rule attract__rule--bottom" aria-hidden="true"></div>
+          <p class="attract__cta">Tap to start</p>
+          <p class="attract__use">Photo booth · Golf-ball print · Business assessment</p>
+        </button>
+      </section>
+
+      <section class="screen screen--booth" id="screenBooth" aria-hidden="true" hidden>
+        <p class="lede">Step into the frame. OpenAI will create your Urban Golf portrait from your photo.</p>
+        <div class="booth">
+          <div class="booth__cam-wrap" id="boothWrap">
+            <video class="booth__cam" id="boothCam" playsinline muted autoplay></video>
+            <img class="booth__cam booth__still" id="boothPreview" alt="Captured portrait" hidden />
+            <canvas id="boothCanvas" hidden></canvas>
+            <div class="booth__frame" aria-hidden="true">
+              <div class="booth__arch"></div>
+              <div class="booth__lockup">RPB LAW FIRM</div>
+            </div>
+            <div class="booth__hud">
+              <span class="booth__hud-chip">PORTRAIT · 1080×1920</span>
+              <span class="booth__hud-chip">EDEN ROC</span>
+            </div>
+            <div class="booth__countdown" id="boothCountdown" hidden>3</div>
+            <div class="booth__flash" id="boothFlash"></div>
+            <div class="booth__fallback" id="boothFallback" hidden>
+              <div class="booth__fallback-lockup">RPB LAW FIRM</div>
+              <p>Camera unavailable. You can continue with a branded placeholder.</p>
+            </div>
+          </div>
+          <div class="booth__err" id="boothErr" role="status"></div>
+          <button class="btn btn--primary btn--block btn--xl" id="boothCapture" type="button">
+            Take photo
+          </button>
+          <button class="btn btn--ghost btn--block" id="boothSkip" type="button">
+            Continue without AI portrait
+          </button>
+        </div>
+      </section>
+
+      <section class="screen screen--ball" id="screenBall" aria-hidden="true" hidden>
+        <p class="lede">Preview your ball. Print line is 12 characters. This confirms a simulated print job — no hardware.</p>
+        <div class="ball-stage">
+          <canvas id="ballCanvas" width="640" height="640" aria-label="Golf ball print preview"></canvas>
+        </div>
+        <label class="field" for="printLine">
+          <span>Print line (name, 12 characters)</span>
+          <input id="printLine" name="printLine" type="text" maxlength="12" autocomplete="off" placeholder="YOUR NAME" />
+        </label>
+        <div class="print-status" id="printStatus" role="status"></div>
+        <button class="btn btn--primary btn--block btn--xl" id="printBall" type="button">
+          Print ball
+        </button>
+      </section>
+
+      <section class="screen screen--lead" id="screenLead" aria-hidden="true" hidden>
+        <p class="lede">Business assessment — required to finish.</p>
+        <form class="lead-form" id="leadForm" novalidate>
+          <label class="field" for="nameInput">
+            <span>Name</span>
+            <input id="nameInput" name="name" type="text" autocomplete="name" maxlength="80" placeholder="Your name" required />
+          </label>
+          <label class="field" for="companyInput">
+            <span>Company</span>
+            <input id="companyInput" name="company" type="text" autocomplete="organization" maxlength="120" placeholder="Company name" required />
+          </label>
+          <label class="field" for="emailInput">
+            <span>Email</span>
+            <input id="emailInput" name="email" type="email" inputmode="email" autocomplete="email" maxlength="320" placeholder="you@company.com" required />
+          </label>
+          <label class="field" for="roleInput">
+            <span>Role</span>
+            <input id="roleInput" name="role" type="text" autocomplete="organization-title" maxlength="80" placeholder="Your role" required />
+          </label>
+          <fieldset class="field field--chips">
+            <legend>What they need help with</legend>
+            <div class="chips" role="radiogroup" aria-label="Help topic">
+              <label class="chip"><input type="radio" name="needHelp" value="ip" /> IP</label>
+              <label class="chip"><input type="radio" name="needHelp" value="corporate" /> Corporate</label>
+              <label class="chip"><input type="radio" name="needHelp" value="litigation" /> Litigation</label>
+              <label class="chip"><input type="radio" name="needHelp" value="other" /> Other</label>
+            </div>
+          </fieldset>
+          <label class="field" for="needHelpOther" id="otherWrap" hidden>
+            <span>Tell us a bit more</span>
+            <textarea id="needHelpOther" name="needHelpOther" maxlength="280" rows="3" placeholder="What do you need help with?"></textarea>
+          </label>
+          <label class="consent" for="consentCheck">
+            <input id="consentCheck" name="consent" type="checkbox" />
+            <span>I agree to share this business assessment with RPB Law Firm from the Urban Golf Weekend activation. Optional photo email goes only to the address I enter.</span>
+          </label>
+          <div class="form-err" id="leadErr" role="alert"></div>
+          <button class="btn btn--primary btn--block btn--xl" id="leadSubmit" type="submit">
+            Submit assessment
+          </button>
+        </form>
+      </section>
+
+      <section class="screen screen--thanks" id="screenThanks" aria-hidden="true" hidden>
+        <div class="thanks">
+          <div class="thanks__lockup">RPB LAW FIRM</div>
+          <h2 class="thanks__title">Thank you</h2>
+          <p class="thanks__lede" id="thanksLede">Your assessment is in. Enjoy Urban Golf Weekend.</p>
+          <p class="thanks__meta" id="thanksMeta"></p>
+          <p class="thanks__site">Proclaim.com</p>
+          <button class="btn btn--primary btn--block btn--xl" id="thanksReset" type="button">
+            Start next guest
+          </button>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <span>RPB Law Firm · Urban Golf Weekend · Eden Roc Miami Beach · Sep 5 2026</span>
+      <span class="footer__sub">Powered by PowerWyze · Proclaim.com</span>
+    </footer>
+
+  </div>
+
+  <link rel="stylesheet" href="/assets/osk.css" />
+  <script src="/assets/osk.js" defer></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>

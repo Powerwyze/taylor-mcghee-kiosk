@@ -1,0 +1,14 @@
+{
+  "name": "taylor-mcghee-kiosk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DEMO-006 RPB Law Firm / Taylor McGhee — Urban Golf Weekend portrait kiosk (photo + golf-ball preview + business assessment). Internal playable. No client email.",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "formidable": "^3.5.1",
+    "nodemailer": "^9.0.6"
+  }
+}
