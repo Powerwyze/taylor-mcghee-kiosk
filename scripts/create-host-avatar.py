@@ -52,5 +52,5 @@ bpy.ops.export_scene.gltf(filepath=os.path.abspath('public/assets/blueprint.glb'
 bpy.ops.object.camera_add(location=(.5,-7,.25));cam=bpy.context.object;cam.rotation_euler=(Vector((0,0,-.05))-cam.location).to_track_quat('-Z','Y').to_euler();cam.data.type='ORTHO';cam.data.ortho_scale=3.7;bpy.context.scene.camera=cam
 for loc,power,size in [((-3,-4,5),450,4),((3,-2,1),260,3),((1,3,3),360,3)]:
  bpy.ops.object.light_add(type='AREA',location=loc);o=bpy.context.object;o.data.energy=power;o.data.size=size;o.rotation_euler=(-o.location).to_track_quat('-Z','Y').to_euler()
-scene=bpy.context.scene;scene.render.engine='BLENDER_EEVEE';scene.render.film_transparent=True;scene.render.resolution_x=800;scene.render.resolution_y=800;scene.render.resolution_percentage=100;scene.view_settings.view_transform='Standard';scene.render.filepath=os.path.abspath('public/assets/blueprint-preview.png')
+scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU';scene.cycles.samples=24;scene.render.film_transparent=True;scene.render.resolution_x=800;scene.render.resolution_y=800;scene.render.resolution_percentage=100;scene.view_settings.view_transform='Standard';scene.render.filepath=os.path.abspath('public/assets/blueprint-preview.png')
 bpy.ops.wm.save_as_mainfile(filepath=os.path.abspath('design/blueprint.blend'));bpy.ops.render.render(write_still=True)
