@@ -19,7 +19,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node tests/live-headshot.mjs
         env:
-          KIOSK_URL: https://rpb-legacycon-kiosk-9h13witpn-powerwyzes-projects.vercel.app
+          KIOSK_URL: https://rpb-legacycon-kiosk-14mxt434x-powerwyzes-projects.vercel.app
       - uses: actions/upload-artifact@v4
         if: always()
         with:
