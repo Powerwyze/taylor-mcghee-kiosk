@@ -4,13 +4,14 @@ await mkdir('artifacts',{recursive:true});const report={};
 const browser=await chromium.launch({args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--autoplay-policy=no-user-gesture-required','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:1080,height:1920},permissions:['camera','microphone']});
- await page.addInitScript(()=>{const Native=RTCPeerConnection;window.liveEvents=[];window.liveChannel=null;window.RTCPeerConnection=class extends Native{addTrack(t,...a){if(t.kind==='audio')t.enabled=false;return super.addTrack(t,...a);}createDataChannel(...a){const c=super.createDataChannel(...a);window.liveChannel=c;c.addEventListener('message',({data})=>{try{window.liveEvents.push(JSON.parse(data));}catch{}});return c;}};});
+ await page.addInitScript(()=>{const Native=RTCPeerConnection;window.liveEvents=[];window.liveChannel=null;window.livePeer=null;window.RTCPeerConnection=class extends Native{constructor(...a){super(...a);window.livePeer=this;}addTrack(t,...a){if(t.kind==='audio')t.enabled=false;return super.addTrack(t,...a);}createDataChannel(...a){const c=super.createDataChannel(...a);window.liveChannel=c;c.addEventListener('message',({data})=>{try{window.liveEvents.push(JSON.parse(data));}catch{}});return c;}};});
  await page.goto(base);await page.waitForFunction(()=>document.getElementById('face').dataset.avatar==='ready',null,{timeout:30000});report.avatar='3D loaded';
  await page.screenshot({path:'artifacts/live-home.png',fullPage:true});await page.locator('#face').screenshot({path:'artifacts/avatar-alone.png'});
  await page.locator('#voiceButton').click();
  try{
   await page.waitForFunction(()=>window.liveEvents.some(e=>e.type==='session.started'),null,{timeout:40000});report.voiceStarted=true;
   await page.waitForFunction(()=>window.liveEvents.some(e=>e.type==='session.output_transcript.delta'),null,{timeout:35000});report.spokenCaptions=true;
+  await page.waitForFunction(async()=>{const stats=await window.livePeer.getStats();return [...stats.values()].some(s=>s.type==='inbound-rtp'&&s.kind==='audio'&&s.bytesReceived>0)&&!document.getElementById('voiceAudio').paused;},null,{timeout:15000});report.incomingAudio=true;
   const ask=text=>page.evaluate(text=>{window.liveChannel.send(JSON.stringify({type:'response.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}));window.liveChannel.send(JSON.stringify({type:'response.create'}));},text);
   await ask('I do not have a business card. Please skip the card step.');
   await page.waitForFunction(()=>document.getElementById('kiosk').dataset.screen==='category',null,{timeout:30000});report.voiceSkipCard=true;
@@ -40,5 +41,5 @@ try{
   report.qr=(await fetch(base+'/api/qr?text='+encodeURIComponent(base+'/p/'+id))).ok;
  }else report.headshotError=(await r.json().catch(()=>({}))).code||'unavailable';
  await writeFile('artifacts/live-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
- assert.equal(report.voiceStarted,true,'live voice startup');assert.equal(report.spokenCaptions,true);assert.equal(report.voiceSkipCard,true);assert.equal(report.voiceCategory,true);assert.deepEqual(report.voiceErrors,[]);assert.equal(report.cardOCR,true);assert.equal(report.editStatus,'success','real image generation succeeded');assert.ok(['passed','rejected'].includes(report.checkStatus),'independent check completed');assert.equal(report.headshotPath,report.checkStatus==='passed'?'ai-checked':'original','rejected likeness must use original');assert.equal(report.unlockSuccess,true);assert.equal(report.wrongNumberHidden,true);assert.equal(report.likenessGate,true);assert.equal(report.unboundHidden,true);
+ assert.equal(report.voiceStarted,true,'live voice startup');assert.equal(report.spokenCaptions,true);assert.equal(report.incomingAudio,true);assert.equal(report.voiceSkipCard,true);assert.equal(report.voiceCategory,true);assert.deepEqual(report.voiceErrors,[]);assert.equal(report.cardOCR,true);assert.equal(report.editStatus,'success','real image generation succeeded');assert.ok(['passed','rejected'].includes(report.checkStatus),'independent check completed');assert.equal(report.headshotPath,report.checkStatus==='passed'?'ai-checked':'original','rejected likeness must use original');assert.equal(report.unlockSuccess,true);assert.equal(report.wrongNumberHidden,true);assert.equal(report.likenessGate,true);assert.equal(report.unboundHidden,true);
 }finally{await browser.close();}
