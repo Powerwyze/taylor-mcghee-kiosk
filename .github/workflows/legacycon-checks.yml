@@ -20,6 +20,31 @@ jobs:
       - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node tests/kiosk-browser.mjs
+      - name: Verify deployed QR and phone gate with synthetic test image
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const sharp = require('sharp');
+          (async () => {
+            const base = 'https://rpb-legacycon-kiosk.vercel.app';
+            const health = await (await fetch(base+'/api/health')).json();
+            assert.equal(health.present.OPENAI_BACKUP, true);
+            const jpeg = await sharp({create:{width:640,height:960,channels:3,background:'#02304A'}}).jpeg().toBuffer();
+            const form = new FormData();
+            form.append('image', new Blob([jpeg],{type:'image/jpeg'}), 'synthetic-test.jpg');
+            form.append('phone','2025550123'); form.append('forceFallback','1'); form.append('smsConsent','false');
+            const response = await fetch(base+'/api/banana',{method:'POST',body:form});
+            assert.equal(response.status,200); assert.equal(response.headers.get('X-RPB-Path'),'fallback');
+            const id = response.headers.get('X-Photo-Id'); assert.ok(id);
+            const jpg = Buffer.from(await response.arrayBuffer()); assert.ok(jpg.length>1000);
+            const unlock = phone => fetch(base+'/api/unlock',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,phone})});
+            const bad = await unlock('2025550124'); assert.equal(bad.status,401); assert.equal((await bad.json()).image,undefined);
+            const good = await unlock('2025550123'); assert.equal(good.status,200); assert.ok((await good.json()).image);
+            assert.equal((await fetch(base+'/p/'+id)).status,200);
+            const qr = await fetch(base+'/api/qr?text='+encodeURIComponent(base+'/p/'+id)); assert.equal(qr.status,200);
+            console.log('PASS: live branded fallback, Blob persistence, wrong-number rejection, correct-number unlock, claim page and QR. Synthetic image; no SMS/email sent; no paid AI call.');
+          })().catch(e=>{console.error(e.message);process.exitCode=1});
+          NODE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
