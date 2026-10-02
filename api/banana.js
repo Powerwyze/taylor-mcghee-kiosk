@@ -92,8 +92,13 @@ async function editImage({ prompt, fileBuffer }) {
         signal: controller.signal,
       });
       if (!response.ok) {
-        last = `status ${response.status}`;
-        console.error("image edit failed", response.status);
+        let detail = "";
+        try {
+          const problem = await response.json();
+          detail = String(problem?.error?.code || problem?.error?.type || problem?.error?.message || "").slice(0, 140);
+        } catch (_) {}
+        last = `status ${response.status}${detail ? ` ${detail}` : ""}`;
+        console.error("image edit failed", response.status, detail);
         continue;
       }
       const data = await response.json();
