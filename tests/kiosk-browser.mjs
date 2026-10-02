@@ -1,0 +1,37 @@
+import {chromium} from 'playwright';
+import {createServer} from 'node:http';
+import {readFile,mkdir} from 'node:fs/promises';
+import assert from 'node:assert/strict';
+const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;const file=p==='/'?'/index.html':p; const data=await readFile('public'+file);res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}}).listen(4173);
+await mkdir('artifacts',{recursive:true});
+const browser=await chromium.launch({args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream']});
+try {
+ const context=await browser.newContext({viewport:{width:1080,height:1920},permissions:['camera']});
+ const page=await context.newPage();let requests=0;let complete;
+ await page.route('**/api/banana',async route=>{requests++;await new Promise(r=>complete=r);await route.fulfill({status:200,contentType:'image/png',headers:{'X-Photo-Id':'testphoto1234','X-RPB-Path':'fallback'},body:await readFile('public/assets/logos/rpb.png')});});
+ await page.route('**/api/qr?**',route=>route.fulfill({status:200,contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')}));
+ await page.goto('http://localhost:4173');
+ await page.screenshot({path:'artifacts/portrait-home.png'});
+ await page.locator('#startButton').click();await page.locator('.look-card').first().click();
+ await page.locator('#captureButton').waitFor({state:'visible'});await page.locator('#captureButton').click();
+ await page.locator('#cameraBack').click();await page.waitForTimeout(5500);
+ assert.equal(await page.locator('#kiosk').getAttribute('data-screen'),'looks','Back must cancel countdown');
+ await page.locator('.look-card').first().click();await page.locator('#captureButton').waitFor({state:'visible'});await page.locator('#captureButton').click();
+ await page.locator('#phoneInput').waitFor({state:'visible',timeout:15000});
+ await page.locator('#phoneInput').fill('2025550123');
+ await page.locator('#phoneSubmit').click();
+ await page.evaluate(()=>document.querySelector('#phoneForm').dispatchEvent(new Event('submit',{cancelable:true})));
+ await page.waitForTimeout(200);assert.equal(requests,1,'duplicate submit must not generate twice');
+ await page.screenshot({path:'artifacts/portrait-wait.png'});complete();
+ await page.locator('#resultImage').waitFor({state:'visible'});assert.match(await page.locator('#portraitType').textContent(),/original photo/);
+ await page.screenshot({path:'artifacts/portrait-result.png'});
+ await page.locator('#doneButton').click();assert.equal(await page.locator('#phoneInput').inputValue(),'');assert.equal(await page.locator('#smsConsent').isChecked(),false);
+ await page.setViewportSize({width:390,height:844});await page.reload();
+ await page.screenshot({path:'artifacts/mobile-home.png',fullPage:true});
+ assert.ok(await page.locator('#startButton').evaluate(el=>el.getBoundingClientRect().height)>=44);
+ await page.locator('#startButton').click();await page.locator('.look-card').first().click();await page.locator('#captureButton').waitFor({state:'visible'});await page.locator('#captureButton').click();await page.locator('#phoneInput').waitFor({state:'visible'});
+ assert.equal(await page.locator('#phoneInput').getAttribute('inputmode'),'tel');
+ await page.screenshot({path:'artifacts/mobile-phone.png',fullPage:true});
+ assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal overflow');
+ console.log('PASS: cancellation, duplicate generation guard, fallback disclosure, reset, portrait and phone touch flow (mocked image provider).');
+} finally {await browser.close();server.close();}
