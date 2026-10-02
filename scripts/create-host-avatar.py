@@ -1,4 +1,6 @@
 """Original RPB Legacy Blueprint book, authored and rendered on the cloud runner."""
+import sys
+sys.path.append('/usr/lib/python3/dist-packages')
 import bpy,math,os
 from mathutils import Vector
 bpy.ops.object.select_all(action='SELECT');bpy.ops.object.delete(use_global=False)
@@ -40,6 +42,9 @@ cube('Ribbon stem',(.63,-.41,-1.00),(.17,.032,.60),gold,.012)
 # Ribbon tail extends below the book and gives the guide a distinct silhouette.
 tail=cube('Ribbon',(.63,-.25,-1.49),(.17,.04,.40),gold,.008);tail.rotation_euler.y=-.14
 text('Five moves','FORM · PROTECT · SCALE',-.86,.071)
+for o in list(root.children):
+ if o.type=='FONT':
+  bpy.ops.object.select_all(action='DESELECT');o.select_set(True);bpy.context.view_layer.objects.active=o;bpy.ops.object.convert(target='MESH')
 os.makedirs('public/assets',exist_ok=True);os.makedirs('design',exist_ok=True)
 bpy.ops.object.select_all(action='DESELECT');root.select_set(True)
 for o in root.children:o.select_set(True)

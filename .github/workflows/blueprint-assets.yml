@@ -17,7 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: sudo apt-get update -qq && sudo apt-get install -y blender
+      - run: sudo apt-get update -qq && sudo apt-get install -y blender python3-numpy
       - run: blender --background --python-exit-code 1 --python scripts/create-host-avatar.py
       - name: Vendor pinned renderer and presence detector
         run: |
