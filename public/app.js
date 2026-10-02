@@ -9,9 +9,9 @@ const HOST = "rpb-legacycon-kiosk.vercel.app";
 const ASSESSMENT = "https://assessment.rpblawfirm.com";
 
 const LOOKS = [
-  { id: "agent", name: "Agent of Legacy", line: "Sharp tailoring. Oxblood and gold light." },
-  { id: "builder", name: "Legacy Builder", line: "Magazine cover. Form it. Protect it. Scale it." },
-  { id: "office", name: "Owner's Office", line: "A corner office at golden hour." },
+  { id: "agent", name: "Agent of Legacy", line: "Mission poster. Navy, maroon, and gold." },
+  { id: "builder", name: "Legacy Builder", line: "Business cover. Form it. Protect it. Scale it." },
+  { id: "office", name: "Owner's Office", line: "A founder's office at golden hour." },
 ];
 
 const ICONS = {

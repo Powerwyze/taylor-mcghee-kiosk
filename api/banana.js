@@ -11,10 +11,12 @@ const formidable = formidableModule.default || formidableModule;
 const OPENAI_URL = "https://api.openai.com/v1/images/edits";
 const GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/images/edits";
 
+const IDENTITY = "Photorealistic photo of the same person or people. Preserve their exact face, skin tone, and do not lighten skin. Keep hair texture, age, and body. Do not beautify or change identity. A professional photographer made this, not a beauty filter and not an illustration. Tasteful and empowering. No stereotypes, no extra people, no logos. Leave the lower floor empty.";
+
 const PROMPTS = {
-  agent: "Photorealistic photo of the same person or people. Preserve their exact face, skin tone, hair, age, and body. Do not beautify or change identity. Sharp dark tailoring on a cinematic mission-poster set with oxblood and gold light. No text, no logos, no extra people. Leave the lower floor empty.",
-  builder: "Photorealistic business-magazine cover of the same person or people. Preserve their exact face, skin tone, hair, age, and body. Do not beautify. One coverline only, exactly: Form it. Protect it. Scale it. No awards, no press logos, no other text. Leave the lower area empty.",
-  office: "Photorealistic photo of the same person or people in a corner office at golden hour. Preserve their exact face, skin tone, hair, age, and body. Do not beautify. Tall windows and warm light. No text, no logos, no extra people. Leave the lower floor empty.",
+  agent: `${IDENTITY} Cinematic mission-poster hero for the Black Professionals Network at LegacyCon, an Agent of Legacy. Confident power stance, sharp tailoring, navy #02304A, maroon #681710, and gold light, with a city skyline at dusk. A closed leather briefcase rests at the side. No text.`,
+  builder: `${IDENTITY} Black-business-magazine cover celebrating Black excellence, ownership, entrepreneurship, and generational wealth. One coverline only, exactly: Form it. Protect it. Scale it. No awards, no real magazine names, no other text. A signed agreement sits at the edge and does not cover the face. Navy, maroon, and gold light. Leave the lower area empty.`,
+  office: `${IDENTITY} The same person owns a corner office and boardroom at golden hour. Warm gold light and a dusk skyline through tall windows. Subtle legacy cues: small framed family photos with unreadable faces, a shelf of books with unreadable spines, a signed business agreement, and a briefcase on the desk. No readable legal text.`,
 };
 
 function setCors(res) {
