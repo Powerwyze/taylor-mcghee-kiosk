@@ -1,9 +1,15 @@
 name: Verify LegacyCon production
 on:
-  push:
-    branches: [legacycon-2026]
-    paths: ['.github/workflows/legacycon-production-check.yml']
   workflow_dispatch:
+    inputs:
+      kiosk_url:
+        description: Public kiosk or preview URL to inspect
+        default: https://rpb-legacycon-kiosk.vercel.app
+        required: true
+      skip_provider_checks:
+        description: Skip unchanged paid provider paths for visual-only updates
+        default: 'true'
+        required: true
 jobs:
   production:
     runs-on: ubuntu-latest
@@ -18,6 +24,9 @@ jobs:
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - run: node tests/production-browser.mjs
+        env:
+          KIOSK_URL: ${{ inputs.kiosk_url }}
+          SKIP_PROVIDER_CHECKS: ${{ inputs.skip_provider_checks }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
