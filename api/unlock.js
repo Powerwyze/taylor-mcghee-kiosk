@@ -1,6 +1,6 @@
 const crypto = require("node:crypto");
 const { normalizeUsPhone, hashPhone, hashToken, sameHex } = require("../lib/phone");
-const { loadMeta, writeMeta } = require("../lib/storage");
+const { loadMeta, writeMeta, readImageForMeta } = require("../lib/storage");
 
 const FAIL = "That number doesn't match. Try the number you entered at the booth.";
 const LOCKED = "Too many tries. Ask someone at the booth for help.";
@@ -71,8 +71,16 @@ module.exports = async function handler(req, res) {
     console.error("token write failed", error.message || "write");
     return reply(res, 500, { ok: false, error: "The portrait could not be opened. Try again." });
   }
+  let image = "";
+  try {
+    image = (await readImageForMeta(meta)).toString("base64");
+  } catch (error) {
+    console.error("unlock image read failed", error.message || "read");
+    return reply(res, 500, { ok: false, error: "The portrait could not be opened. Try again." });
+  }
   return reply(res, 200, {
     ok: true,
+    image,
     token,
     view: `/api/image?id=${encodeURIComponent(id)}&token=${encodeURIComponent(token)}`,
   });

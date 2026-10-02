@@ -72,14 +72,18 @@ form.addEventListener("submit", async (event) => {
     body: JSON.stringify({ id: portraitId, phone: document.getElementById("phone").value })
   });
   const data = await response.json().catch(() => ({}));
-  if (!data.ok || !data.view) {
+  if (!data.ok || !data.image) {
     error.textContent = data.error || "That number doesn't match. Try the number you entered at the booth.";
     return;
   }
+  const binary = atob(data.image);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  const url = URL.createObjectURL(new Blob([bytes], { type: "image/jpeg" }));
   const img = document.getElementById("portrait");
-  img.src = data.view;
+  img.src = url;
   const save = document.getElementById("save");
-  save.href = data.view;
+  save.href = url;
   save.setAttribute("download", "rpb-legacy-portrait.jpg");
   document.getElementById("unlocked").hidden = false;
   form.hidden = true;
