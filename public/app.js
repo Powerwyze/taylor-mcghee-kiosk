@@ -25,7 +25,7 @@ function show(name){screen=name;$('kiosk').dataset.screen=name;document.querySel
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
 const voice=new BlueprintVoice({
- onStatus:(text,ready)=>{$('voiceStatus').textContent=text;$('voiceButton').textContent=ready?'Voice connected':'Talk / retry voice';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(ready?30000:150000);refreshIdle();},
+ onStatus:(text,ready)=>{$('voiceStatus').textContent=ready?'Listening…':/connecting/i.test(text)?'Connecting…':/unavailable|denied|timed out|connection problem|disconnected|could not/i.test(text)?'Voice unavailable. Use buttons or retry.':'';$('voiceButton').textContent=ready?'Voice connected':'Talk to me';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(ready?30000:150000);refreshIdle();},
  onCaption:text=>{$('hostCaptions').textContent=text;},
  onActivity:()=>idle.touch(),
  onAudioBlocked:()=>$('audioResume').hidden=false,
@@ -50,9 +50,9 @@ function reset(manual=true){
  source=null;result=null;sourceUrl='';resultUrl='';role='';contactConfirmed=false;contact=null;generationError='';
  for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).value='';
  for(const id of ['sourceImage','reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
- $('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='Choose a look that feels like your next chapter.';$('countdown').hidden=true;
+ $('optionalDetails').open=false;$('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='';$('countdown').hidden=true;
  $('approvePhoto').disabled=false;$('contactConfirm').disabled=false;$('readCard').disabled=false;
- show('home');idle.start(150000);$('hostCaptions').textContent='A headshot for your next chapter.';
+ show('home');idle.start(150000);$('hostCaptions').textContent='';
 }
 async function camera(video){
  stopCamera();const epoch=version,local=new AbortController();cameraController=local;
@@ -80,28 +80,28 @@ async function readCard(){
   if(!r.ok)throw Error(d.error||'The card could not be read.');
   if(epoch!==version||op.signal.aborted||screen!=='card')return;
   $('nameInput').value=d.name||'';$('companyInput').value=d.company||'';$('emailInput').value=d.email||'';$('phoneInput').value=d.phone||'';
-  $('cardSummary').textContent='Card read. You can check and correct the details after your photo. First, choose your headshot style.';
+  $('cardSummary').textContent='Card scanned.';
   stopCamera();show('category');
  }catch(e){if(epoch===version&&!op.signal.aborted)$('cardStatus').textContent=e.message;}
  finally{if(cardController===op){cardController=null;$('readCard').disabled=false;refreshIdle();}}
 }
-for(const [id,label,line] of roles){const b=document.createElement('button');b.className='role-card';b.dataset.role=id;const title=document.createElement('strong'),desc=document.createElement('span');title.textContent=label;desc.textContent=line;b.append(title,desc);b.onclick=()=>chooseRole(id);$('roleGrid').append(b);}
+for(const [id,label,line] of roles){const b=document.createElement('button');b.className='role-card';b.dataset.role=id;const title=document.createElement('strong'),desc=document.createElement('span');title.textContent=label;desc.textContent=line;b.append(title);b.onclick=()=>chooseRole(id);$('roleGrid').append(b);}
 async function chooseRole(id){if(!['category','camera','review','errorScreen'].includes(screen)||protectedWork())return;role=id;await openPhoto();}
 async function openPhoto(){
  const epoch=version;generationError='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR HEADSHOT';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
- try{await camera($('photoVideo'));if(epoch!==version||screen!=='camera')return;$('takePhoto').disabled=false;$('cameraStatus').textContent='Frame your face and shoulders. Tap when you are ready for a five-second countdown.';notify();}
+ try{await camera($('photoVideo'));if(epoch!==version||screen!=='camera')return;$('takePhoto').disabled=false;$('cameraStatus').textContent='5-second countdown after you tap.';notify();}
  catch(e){if(epoch===version&&e.name!=='AbortError'){$('cameraStatus').textContent=cameraErrorMessage(e);$('takePhoto').disabled=false;$('takePhoto').textContent='Retry camera';}}
 }
 async function takeHeadshot(){
  if(screen!=='camera'||captureBusy||generating)return;
- if(!cameraStream){$('takePhoto').textContent='I’m ready · Take headshot';return openPhoto();}
+ if(!cameraStream){$('takePhoto').textContent='Take photo';return openPhoto();}
  const epoch=version,cam=cameraController;captureBusy=true;$('takePhoto').disabled=true;refreshIdle();voice.quiet(true);notify();
  try{
   await runCountdown({seconds:5,signal:AbortSignal.any([controller.signal,cam.signal]),onTick:n=>{$('countdown').hidden=false;$('countdown').textContent=n;}});
   const b=await freeze($('photoVideo'));
   if(epoch!==version||cam.signal.aborted)return;
   if(sourceUrl)URL.revokeObjectURL(sourceUrl);source=b;sourceUrl=URL.createObjectURL(b);stopCamera();
-  contactConfirmed=false;result=null;contact=null;show('contact');$('generationStatus').textContent='While your headshot is generated and checked, confirm your mobile number.';
+  contactConfirmed=false;result=null;contact=null;$('optionalDetails').open=['nameInput','companyInput','emailInput'].some(id=>$(id).value.trim());show('contact');$('generationStatus').textContent='Your photo is generating.';
   generate(); // Deliberately independent of contact entry.
  }catch(e){if(epoch===version&&!cam.signal.aborted)$('cameraStatus').textContent='Capture did not finish. Tap Take headshot to try again.';}
  finally{if(epoch===version){captureBusy=false;$('countdown').hidden=true;$('takePhoto').disabled=false;voice.quiet(false);refreshIdle();}}
@@ -120,8 +120,8 @@ async function generate(){
   if(epoch!==version){URL.revokeObjectURL(url);return;}
   if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=url;
   result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your headshot.')};
-  $('generationStatus').textContent='Your photo is ready. Confirm these details to review it.';
- }catch(e){if(epoch===version&&!controller.signal.aborted){generationError=e.message||'The headshot timed out. Try again.';$('generationStatus').textContent='Your details are safe. Confirm them to see the photo options.';}}
+  $('generationStatus').textContent='Photo ready. Confirm to continue.';
+ }catch(e){if(epoch===version&&!controller.signal.aborted){generationError=e.message||'The headshot timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
  finally{if(epoch===version){generating=false;refreshIdle();if(contactConfirmed)advance();notify();}}
 }
 function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]==='1')n=n.slice(1);return /^[2-9]\d{2}[2-9]\d{6}$/.test(n)?n:'';}
@@ -173,4 +173,4 @@ $('sentryButton').onclick=async()=>{if(sentry.enabled){sentry.disable();sentryEn
 document.addEventListener('pointerdown',()=>idle.touch());document.addEventListener('keydown',()=>idle.touch());
 document.addEventListener('visibilitychange',()=>{if(document.hidden){sentry.disable();sentryEnabledByOperator=false;reset(true);idle.stop();}});
 window.addEventListener('pagehide',()=>{sentry.disable();reset(true);idle.stop();});
-idle.start(150000);show('home');$('hostCaptions').textContent='A headshot for your next chapter.';
+idle.start(150000);show('home');$('hostCaptions').textContent='';

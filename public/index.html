@@ -9,67 +9,62 @@
 <header class="masthead"><a class="brand" href="/" aria-label="RPB Law Firm headshots"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"></a><span>LEGACYCON <b>2026</b></span><button class="quiet" id="resetButton">Start over</button></header>
 <div class="layout">
 <aside class="host-panel">
- <p class="eyebrow">MEET YOUR AI GUIDE</p>
- <div id="hostCaptions" class="captions" role="status" aria-live="polite">A headshot for your next chapter.</div>
+ <div id="hostCaptions" class="captions" role="status" aria-live="polite"></div>
  <div id="face" class="avatar" data-avatar="loading"><canvas id="avatar" aria-label="Blueprint, an animated mahogany gavel with gold accents and expressive eyes"></canvas><img id="avatarFallback" src="/assets/blueprint-fallback.svg" alt="Blueprint: a mahogany and gold gavel with friendly eyes and a sounding block"></div>
- <div class="host-name">Blueprint <span>YOUR LEGACY GUIDE</span></div>
- <p class="host-intro">Your real face. A fresh introduction.</p>
- <div class="voice-controls"><button id="voiceButton" class="outline">Talk with Blueprint</button><button id="voiceStop" class="quiet" hidden>Use buttons / mute</button><button id="audioResume" class="outline" hidden>Enable voice audio</button></div>
- <p id="voiceStatus" class="small" role="status">Every step also works by touch.</p>
- <button id="sentryButton" class="quiet">Enable camera welcome</button><p id="sentryStatus" class="small" role="status"></p>
+ <div class="voice-controls"><button id="voiceButton" class="outline">Talk to me</button><button id="voiceStop" class="quiet" hidden>Use buttons / mute</button><button id="audioResume" class="outline" hidden>Enable voice audio</button></div>
+ <p id="voiceStatus" class="small" role="status"></p>
+
 </aside>
 <main>
-<nav class="steps" aria-label="Your headshot steps"><span id="step1">01 · Introduce</span><span id="step2">02 · Headshot</span><span id="step3">03 · Take it with you</span></nav>
+<nav hidden class="steps" aria-label="Your headshot steps"><span id="step1">01 · Introduce</span><span id="step2">02 · Headshot</span><span id="step3">03 · Take it with you</span></nav>
 <section id="home" class="screen">
- <p class="eyebrow">THE MISSION IS POSSIBLE</p><h1>Your next chapter<br><em>starts with you.</em></h1>
- <p class="lede">A professional headshot that keeps what makes you, you. Choose your style. Let Blueprint handle the introduction.</p>
- <div class="intro-card"><span class="card-icon" aria-hidden="true">▤</span><div><h2>Have a business card?</h2><p>Show it to the camera to fill in your details. You’ll review everything before it’s used.</p></div></div>
- <button id="scanStart" class="primary">Scan my business card <span aria-hidden="true">↗</span></button>
- <button id="skipCard" class="outline">No card? Skip and start my headshot</button>
- <p class="small">Card scanning is optional. Your card image isn’t saved. Delivery is by QR code, not a text message.</p>
+ <h1>Your new<br><em>headshot.</em></h1>
+ <button id="scanStart" class="primary">Scan business card</button>
+ <button id="skipCard" class="outline">Skip card</button>
+
 </section>
 <section id="card" class="screen" hidden>
- <p class="eyebrow">01 · INTRODUCE YOURSELF</p><h1>A small card.<br><em>A great introduction.</em></h1><p>Hold one business card flat, fill the guide, and avoid glare. Tap when the words are sharp.</p>
+ <h1>Show your card.</h1><p>Hold it inside the guide.</p>
  <div class="camera-frame card-frame" id="cardFrame"><video id="cardVideo" autoplay playsinline muted></video><div class="card-guide"></div></div>
- <p id="cardStatus" role="status"></p><button id="readCard" class="primary">Read my card</button><button id="cardSkip" class="outline">Skip card and continue</button>
+ <p id="cardStatus" role="status"></p><button id="readCard" class="primary">Scan card</button><button id="cardSkip" class="outline">Skip</button>
 </section>
 <section id="category" class="screen" hidden>
- <p class="eyebrow">02 · PICK YOUR HEADSHOT</p><h1>How do you<br><em>show up?</em></h1><p id="cardSummary">Choose a look that feels like your next chapter.</p><p class="small">One person per headshot. These choices change the setting and light—not your face or clothing.</p>
- <div id="roleGrid" class="role-grid"></div><button id="categoryBack" class="quiet">Back to introduction</button>
+ <h1>Choose your style.</h1><p id="cardSummary" role="status"></p>
+ <div id="roleGrid" class="role-grid"></div><button id="categoryBack" class="quiet">Back</button>
 </section>
 <section id="camera" class="screen" hidden>
- <p class="eyebrow" id="selectedRole">YOUR HEADSHOT</p><h1>Let’s capture<br><em>the real you.</em></h1>
- <p>One person, face and shoulders in the guide. Keep your whole head visible and look toward the lens.</p>
+ <p class="eyebrow" id="selectedRole">YOUR HEADSHOT</p><h1>Ready?</h1>
+ <p>One person. Face and shoulders in the guide.</p>
  <div class="camera-frame" id="photoFrame"><video id="photoVideo" autoplay playsinline muted></video><div class="face-guide"></div><div id="countdown" hidden></div></div>
- <p id="cameraStatus" role="status">Starting camera…</p><button id="takePhoto" class="primary">I’m ready · Take headshot</button><button id="cameraBack" class="outline">Change my style</button>
+ <p id="cameraStatus" role="status">Starting camera…</p><button id="takePhoto" class="primary">Take photo</button><button id="cameraBack" class="outline">Change style</button>
 </section>
 <section id="contact" class="screen" hidden>
- <p class="eyebrow">03 · YOUR PRIVATE PHOTO LINK</p><h1 id="contactHeading">Your headshot is<br><em>taking shape.</em></h1><p id="generationStatus" role="status">While we work, check the number you’ll use to unlock your photo.</p>
+ <h1 id="contactHeading">Confirm your number.</h1><p id="generationStatus" role="status">Your photo is generating.</p>
  <form id="contactForm">
- <label for="phoneInput">Your mobile number <span>required to unlock your QR</span></label><input id="phoneInput" type="text" inputmode="tel" maxlength="20" autocomplete="off" required>
- <div class="contact-extras"><div><label for="nameInput">Name <span>optional</span></label><input id="nameInput" type="text" maxlength="120" autocomplete="off"></div><div><label for="companyInput">Company <span>optional</span></label><input id="companyInput" type="text" maxlength="120" autocomplete="off"></div></div>
- <label for="emailInput">Email <span>optional contact detail; no email is sent</span></label><input id="emailInput" type="text" inputmode="email" maxlength="254" autocomplete="off">
- <p class="small">Use a number you can enter again on your phone. Scanned card details can be wrong—please correct them. This step does not sign you up for marketing.</p>
+ <label for="phoneInput">Mobile number <span>Use this number to unlock your photo.</span></label><input id="phoneInput" type="text" inputmode="tel" maxlength="20" autocomplete="off" required>
+ <details id="optionalDetails"><summary>Name, company &amp; email (optional)</summary><div class="contact-extras"><div><label for="nameInput">Name <span>optional</span></label><input id="nameInput" type="text" maxlength="120" autocomplete="off"></div><div><label for="companyInput">Company <span>optional</span></label><input id="companyInput" type="text" maxlength="120" autocomplete="off"></div></div>
+ <label for="emailInput">Email <span>optional; no email is sent</span></label><input id="emailInput" type="text" inputmode="email" maxlength="254" autocomplete="off">
+ </details>
  <button type="button" class="quiet" id="keyboardToggle">Show touch keyboard</button><div id="keyboard" class="keyboard" hidden></div>
- <p id="contactError" role="alert" class="error"></p><button id="contactConfirm" class="primary" type="submit">Confirm my details</button>
+ <p id="contactError" role="alert" class="error"></p><button id="contactConfirm" class="primary" type="submit">Confirm</button>
  </form>
 </section>
 <section id="wait" class="screen" hidden>
- <p class="eyebrow">A MOMENT FOR YOUR NEXT CHAPTER</p><h1>Good things<br><em>take a moment.</em></h1><p id="waitStatus" role="status">Your headshot is being created and checked.</p><div class="progress" aria-hidden="true"><span></span></div>
- <div class="game-title"><h2>A quick memory match?</h2><span id="matchScore">0 / 6 pairs</span></div><div id="matchGrid" class="match-grid"></div><p class="small">Just for fun. No score affects your photo.</p><button id="editContact" class="quiet">Edit my details</button>
+ <h1>Creating your headshot…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
+ <div class="game-title"><h2>Memory match</h2><span id="matchScore">0 / 6 pairs</span></div><div id="matchGrid" class="match-grid"></div><button id="editContact" class="quiet">Edit details</button>
 </section>
 <section id="review" class="screen" hidden>
- <p class="eyebrow">YOUR FACE. YOUR SAY.</p><h1>Does it feel<br><em>like you?</em></h1>
+ <h1>Looks like you?</h1>
  <div class="comparison"><figure><img id="sourceImage" alt="Your original camera photo"><figcaption>Your original</figcaption></figure><figure><img id="reviewImage" alt="Your headshot for review"><figcaption>Your headshot</figcaption></figure></div>
- <p id="photoNotice" role="status"></p><p class="small">Check your face, skin tone, hair and expression. AI edits can still make mistakes.</p><p id="claimError" role="alert" class="error"></p>
- <button id="approvePhoto" class="primary">Looks like me · Get my QR</button><button id="retakePhoto" class="outline">Doesn’t look like me · Retake</button><button id="reviewContact" class="quiet">Edit my mobile number</button>
+ <p id="photoNotice" role="status"></p><p id="claimError" role="alert" class="error"></p>
+ <button id="approvePhoto" class="primary">Yes · Get QR</button><button id="retakePhoto" class="outline">Retake</button><button id="reviewContact" class="quiet">Edit number</button>
 </section>
 <section id="result" class="screen" hidden>
- <p class="eyebrow">TAKE YOUR NEXT CHAPTER WITH YOU</p><h1>All yours.</h1><div class="takeaway"><img id="resultImage" alt="Your approved headshot"><div><img id="qrImage" class="qr" alt="Scan to open your headshot"><p>Scan the QR. Enter the <strong>same mobile number</strong> to view and save your headshot.</p><p id="shortLink" class="small"></p></div></div>
- <button id="doneButton" class="primary">Finish · Ready for the next guest</button><p class="small">Your QR link remains available after this screen clears.</p>
+ <h1>All yours.</h1><div class="takeaway"><img id="resultImage" alt="Your approved headshot"><div><img id="qrImage" class="qr" alt="Scan to open your headshot"><p>Scan and enter the <strong>same number</strong> to save.</p><p id="shortLink" class="small"></p></div></div>
+ <button id="doneButton" class="primary">Done</button>
 </section>
-<section id="errorScreen" class="screen" hidden><p class="eyebrow">LET’S GET YOU BACK ON TRACK</p><h1>One more<br><em>moment.</em></h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry from this photo</button><button id="errorRetake" class="outline">Retake photo</button></section>
+<section id="errorScreen" class="screen" hidden><h1>Let’s try again.</h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry</button><button id="errorRetake" class="outline">Retake</button></section>
 </main></div>
-<footer><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><p>Blueprint is an original AI guide. General information only—not legal advice. No attorney-client relationship is created.</p></footer>
+<footer><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><details class="booth-options"><summary>Booth options</summary> <button id="sentryButton" class="quiet">Enable camera welcome</button><p id="sentryStatus" class="small" role="status"></p><p>Card scanning is optional. Card images aren’t saved. Confirm your details before use. Delivery is by QR. Blueprint is an original AI guide, not legal advice.</p></details></footer>
 </div><audio id="voiceAudio" autoplay></audio><video id="sentryVideo" autoplay muted playsinline hidden></video>
 <script type="module" src="/app.js"></script></body></html>
