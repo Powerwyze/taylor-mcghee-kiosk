@@ -15,7 +15,7 @@ Business cards are uploaded to the server and sent to OpenAI only to transcribe 
 High input fidelity, high-quality editing and a conservative head/shoulders prompt preserve source facial geometry, hair, glasses, age, skin tone and clothing. A separate source usability check rejects unclear/multiple faces. A separate result check conservatively rejects visible identity drift. If checking or editing is unavailable, the original camera photo receives only the logo band and is clearly labeled. There is no silent AI substitution or automatic paid regeneration. Guest still reviews source and result side by side before QR creation; visual checks cannot guarantee perfect likeness.
 
 ## Blueprint
-Original oxblood leather book with gold lettering, page edges and ribbon: a business blueprint/legacy motif for RPB. Not claimed as an official mascot or employee. Blender asset generated in GitHub Actions with editable .blend. Gold/oxblood book SVG fallback. Audio drives jawOpen/mouthRound; not phoneme-perfect lip sync.
+Original mahogany gavel with gold collars, expressive eyes, speaking mouth and sounding block, selected by the user for RPB's legal-brand host. Not claimed as an official mascot, judge or employee. Blender asset generated in GitHub Actions with editable .blend and matching mahogany/gold gavel SVG fallback. Audio drives jawOpen/mouthRound; not phoneme-perfect lip sync.
 Voice: exact gpt-live-1, marin, WebRTC /v1/live/sessions; separate gpt-5.6-luna delegation backend. Short warm welcome, explicit readiness, interruptible generation conversation, captions from outgoing transcripts. No legal advice or invented giveaway terms. Touch remains functional with no microphone. Voice teardown does not reset photo/contact work.
 Optional camera welcome uses local MediaPipe person detection and a single recent frame for a greeting. Operator enables once. Manual reset/Stop/page hide stop it; idle reset can rearm only when still enabled. Guest-only inactivity: 30 seconds live voice; 150 seconds touch, paused while work is pending.
 
@@ -33,7 +33,7 @@ DEMO-013 updates the existing RPB LegacyCon kiosk into a solo headshot experienc
 
 Guests can scan a business card or skip it, choose Entrepreneur, Tech enthusiast, VC, Law firm, Blue collar, Executive or Community leader, and take a photo with a cancelable five-second countdown. Generation starts immediately while they review or enter their mobile number. The memory game fills remaining wait time. Cards are transient OCR inputs, editable contact drafts require touch confirmation, and no SMS or email is sent.
 
-Blueprint is an original animated RPB legacy-book character with a matching fallback, GPT-Live 1 voice, speech captions, interruption support, optional camera welcome and independent touch controls. Voice may select a style or start an explicitly confirmed capture, but cannot confirm contacts, approve likeness or issue the QR.
+Blueprint is an original animated RPB gavel character with a matching fallback, GPT-Live 1 voice, speech captions, interruption support, optional camera welcome and independent touch controls. Voice may select a style or start an explicitly confirmed capture, but cannot confirm contacts, approve likeness or issue the QR.
 
 Headshots use a conservative high-fidelity image edit that preserves facial features and clothing. Separate source and result checks reject unusable captures or appearance drift. Guests review source and result side by side before approving. Unavailable/rejected AI edits use a clearly labeled original-photo fallback. An unguessable claim capability binds the photo to the confirmed phone only after likeness approval; wrong-number unlocks remain denied.
 
@@ -50,3 +50,6 @@ Final verification: remote regression run 37075969303 passed; live run 370759693
 A live retry test exposed stale Blob metadata returning an unbound phone after approval. Metadata updates now use immutable revision URLs, following Vercel Blob's caching guidance (https://vercel.com/docs/vercel-blob), and a regression test verifies that an old base record cannot undo confirmation. Final rapid wrong/correct-phone check returned 401 then 200.
 
 Reviewed app source: ad050e361ae08513400f58105bb2f40261de8f0e; preview deployment dpl_Bv4f7XWyBEmuUBw8TZSmVvHsfHxb, promoted to production.
+
+## Gavel revision
+The user requested a gavel in place of the book on October 2. Blueprint keeps its name, GPT-Live 1 voice, jawOpen/mouthRound audio-driven morphs and all headshot/card/QR/phone behavior. Only character geometry, fallback artwork, accessible descriptions and host appearance instructions changed. Previous production rollback: dpl_Aqq3veR7qTiSywinX7Gfo8WctnjG.
