@@ -30,7 +30,7 @@ try{
  const r=await fetch(base+'/api/headshot',{method:'POST',body:form});report.headshotStatus=r.status;
  if(r.ok){
   const image=Buffer.from(await r.arrayBuffer());await writeFile('artifacts/live-headshot.jpg',image);await writeFile('artifacts/source-fixture.jpg',source);
-  report.headshotPath=r.headers.get('X-RPB-Path');const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
+  report.headshotPath=r.headers.get('X-RPB-Path');report.editStatus=r.headers.get('X-AI-Edit');report.checkStatus=r.headers.get('X-AI-Check');report.notice=decodeURIComponent(r.headers.get('X-Photo-Notice')||'');const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
   const post=(path,data)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   const before=await post('/api/unlock',{id,phone:'2025550123'});report.unboundHidden=!before.ok;
   const invalid=await post('/api/claim-photo',{id,claim,phone:'2025550123',confirmed:true,likenessApproved:false});report.likenessGate=invalid.status===400;
