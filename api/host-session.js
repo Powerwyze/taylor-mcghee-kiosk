@@ -2,6 +2,7 @@ const {reply,sameOrigin,jsonBody}=require('../lib/http');
 const {openaiRequest}=require('../lib/openai-request');
 const {liveSessionConfig}=require('../lib/legacy-host');
 module.exports=async(req,res)=>{
+ if(req.query?.greeting==='1')return require('../lib/host-greeting-handler')(req,res);
  if(req.method!=='POST')return reply(res,405,{error:'POST required'});
  if(!sameOrigin(req))return reply(res,403,{error:'Please use this kiosk.'});
  try{
