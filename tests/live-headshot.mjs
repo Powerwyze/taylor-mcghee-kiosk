@@ -36,9 +36,9 @@ try{
   const invalid=await post('/api/claim-photo',{id,claim,phone:'2025550123',confirmed:true,likenessApproved:false});report.likenessGate=invalid.status===400;
   const bind=await post('/api/claim-photo',{id,claim,phone:'2025550123',confirmed:true,likenessApproved:true,name:'Synthetic test'});report.claimStatus=bind.status;
   const wrong=await post('/api/unlock',{id,phone:'2025550124'});report.wrongNumberHidden=wrong.status===401&&!((await wrong.json()).image);
-  const right=await post('/api/unlock',{id,phone:'2025550123'});report.unlockSuccess=right.ok&&Boolean((await right.json()).image);
+  const right=await post('/api/unlock',{id,phone:'2025550123'});report.unlockStatus=right.status;report.unlockSuccess=right.ok&&Boolean((await right.json()).image);
   report.qr=(await fetch(base+'/api/qr?text='+encodeURIComponent(base+'/p/'+id))).ok;
  }else report.headshotError=(await r.json().catch(()=>({}))).code||'unavailable';
  await writeFile('artifacts/live-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
- assert.equal(report.voiceStarted,true,'live voice startup');assert.equal(report.spokenCaptions,true);assert.equal(report.voiceSkipCard,true);assert.equal(report.voiceCategory,true);assert.deepEqual(report.voiceErrors,[]);assert.equal(report.cardOCR,true);assert.equal(report.headshotPath,'ai-checked','actual edited and independently checked image required');assert.equal(report.unlockSuccess,true);assert.equal(report.wrongNumberHidden,true);assert.equal(report.likenessGate,true);assert.equal(report.unboundHidden,true);
+ assert.equal(report.voiceStarted,true,'live voice startup');assert.equal(report.spokenCaptions,true);assert.equal(report.voiceSkipCard,true);assert.equal(report.voiceCategory,true);assert.deepEqual(report.voiceErrors,[]);assert.equal(report.cardOCR,true);assert.equal(report.editStatus,'success','real image generation succeeded');assert.ok(['passed','rejected'].includes(report.checkStatus),'independent check completed');assert.equal(report.headshotPath,report.checkStatus==='passed'?'ai-checked':'original','rejected likeness must use original');assert.equal(report.unlockSuccess,true);assert.equal(report.wrongNumberHidden,true);assert.equal(report.likenessGate,true);assert.equal(report.unboundHidden,true);
 }finally{await browser.close();}

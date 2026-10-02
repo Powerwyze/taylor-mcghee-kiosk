@@ -42,8 +42,9 @@ module.exports = async function handler(req, res) {
     email: emailReady(),
     storage: storageKind(),
     model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
-    quality: process.env.OPENAI_IMAGE_QUALITY || "medium",
-    size: process.env.OPENAI_IMAGE_SIZE || "1024x1536",
+    quality: "high",
+    inputFidelity: "high",
+    size: "1024x1536",
     fromName: process.env.FROM_NAME || "RPB Law Firm",
     present,
   }));
