@@ -1,7 +1,7 @@
 const fs = require("node:fs");
 const formidableModule = require("formidable");
 const sharp = require("sharp");
-const { compositeLogoBand } = require("../lib/logo-band");
+const { compositeLogoBand, polishPlainPhoto } = require("../lib/logo-band");
 const { normalizeUsPhone, hashPhone } = require("../lib/phone");
 const { photoId, savePhotoRecord, saveLead } = require("../lib/storage");
 const { sendPortraitEmail } = require("../lib/mail");
@@ -21,7 +21,7 @@ function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  res.setHeader("Access-Control-Expose-Headers", "X-Photo-Id, X-Download-Path");
+  res.setHeader("Access-Control-Expose-Headers", "X-Photo-Id, X-Download-Path, X-RPB-Path, X-RPB-Ms");
 }
 
 function field(fields, name) {
@@ -83,7 +83,7 @@ async function editImage({ prompt, fileBuffer }) {
     fd.append("n", "1");
     fd.append("image", new Blob([fileBuffer], { type: "image/jpeg" }), "guest.jpg");
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 150000);
+    const timer = setTimeout(() => controller.abort(), 90000);
     try {
       const response = await fetch(attempt.url, {
         method: "POST",
@@ -165,9 +165,11 @@ module.exports = async function handler(req, res) {
     return res.end(JSON.stringify({ ok: false, error: "Missing photo.", code: "NO_IMAGE" }));
   }
 
+  let raw;
   let guest;
   try {
-    guest = await compressGuest(fs.readFileSync(file.filepath));
+    raw = fs.readFileSync(file.filepath);
+    guest = await compressGuest(raw);
   } catch (_) {
     res.statusCode = 400;
     res.setHeader("Content-Type", "application/json");
@@ -177,9 +179,34 @@ module.exports = async function handler(req, res) {
   }
 
   const started = Date.now();
+  let pathUsed = "ai";
+  let finalImage;
   try {
+    if (field(fields, "forceFallback") === "1") {
+      const forced = new Error("forced");
+      forced.code = "FORCED";
+      throw forced;
+    }
     const edited = await editImage({ prompt: PROMPTS[look], fileBuffer: guest });
-    const finalImage = await compositeLogoBand(edited);
+    finalImage = await compositeLogoBand(edited);
+  } catch (error) {
+    console.error("portrait ai failed", look, error.code || error.name || "error");
+    try {
+      finalImage = await compositeLogoBand(await polishPlainPhoto(raw));
+      pathUsed = "fallback";
+    } catch (fallbackError) {
+      console.error("portrait fallback failed", look, fallbackError.message || "fallback");
+      res.statusCode = 502;
+      res.setHeader("Content-Type", "application/json");
+      return res.end(JSON.stringify({
+        ok: false,
+        error: "The portrait could not be created. Try again.",
+        code: "FALLBACK",
+      }));
+    }
+  }
+
+  try {
     const id = photoId();
     await savePhotoRecord({ id, jpeg: finalImage, phoneHash: hashPhone(phone), look });
     const consentAt = new Date().toISOString();
@@ -212,23 +239,23 @@ module.exports = async function handler(req, res) {
     }
 
     const ms = Date.now() - started;
-    console.log("portrait", JSON.stringify({ look, ms, bytes: finalImage.length, store: "blob" }));
+    console.log("portrait", JSON.stringify({ look, path: pathUsed, ms, bytes: finalImage.length, store: "blob" }));
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/jpeg");
     res.setHeader("Cache-Control", "no-store");
     res.setHeader("X-Photo-Id", id);
     res.setHeader("X-Download-Path", `/p/${id}`);
+    res.setHeader("X-RPB-Path", pathUsed);
     res.setHeader("X-RPB-Ms", String(ms));
     return res.end(finalImage);
   } catch (error) {
-    console.error("portrait failed", look, error.code || error.name || "error");
-    const missing = error.code === "NO_KEY";
-    res.statusCode = missing ? 503 : 502;
+    console.error("portrait save failed", look, error.message || "save");
+    res.statusCode = 502;
     res.setHeader("Content-Type", "application/json");
     return res.end(JSON.stringify({
       ok: false,
-      error: missing ? "The portrait service is not configured." : "The portrait could not be created. Try again.",
-      code: error.code || "OPENAI",
+      error: "The portrait could not be created. Try again.",
+      code: "SAVE",
     }));
   }
 };
