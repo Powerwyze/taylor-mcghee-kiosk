@@ -1,456 +1,176 @@
-import { startCameraPreview, cameraErrorMessage } from "./vendor/camera-preview.js";
-import { GuestIdle } from "./vendor/host-idle.js";
-import { runCountdown } from "./vendor/host-countdown.js";
-import { captureStill } from "./vendor/photo-capture.js";
-
-const $ = (id) => document.getElementById(id);
-const kiosk = $("kiosk");
-const HOST = "rpb-legacycon-kiosk.vercel.app";
-const ASSESSMENT = "https://assessment.rpblawfirm.com";
-
-const LOOKS = [
-  { id: "agent", name: "Agent of Legacy", line: "Mission poster. Navy, maroon, and gold." },
-  { id: "builder", name: "Legacy Builder", line: "Business cover. Form it. Protect it. Scale it." },
-  { id: "office", name: "Owner's Office", line: "A founder's office at golden hour." },
+import {startCameraPreview,cameraErrorMessage} from './vendor/camera-preview.js';
+import {runCountdown} from './vendor/host-countdown.js';
+import {GuestIdle} from './vendor/host-idle.js';
+import {BlueprintVoice} from './blueprint-voice.js';
+import {CameraSentry} from './host-sentry.js';
+const $=id=>document.getElementById(id);
+const roles=[
+ ['entrepreneur','Entrepreneur','Warm, approachable founder'],
+ ['tech','Tech enthusiast','Clean, modern studio'],
+ ['vc','VC','Refined, understated light'],
+ ['law','Law firm','Polished, professional portrait'],
+ ['bluecollar','Blue collar','Authentic skilled-trades professional'],
+ ['executive','Executive','Confident, classic leadership'],
+ ['community','Community leader','Warm, welcoming presence']
 ];
-
-const ICONS = {
-  scale: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"><path d="M32 8v40M20 52h24M32 14l-16 12M32 14l16 12M10 26h12l-6 12-6-12zm32 0h12l-6 12-6-12z"/></svg>',
-  briefcase: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"><rect x="8" y="20" width="48" height="32" rx="4"/><path d="M24 20v-4a8 8 0 0 1 16 0v4M8 32h48"/></svg>',
-  key: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"><circle cx="22" cy="26" r="10"/><path d="M30 32l20 14v8h-8l-4-4h-6l-4-4"/></svg>',
-  shield: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"><path d="M32 6l22 8v18c0 14-9 22-22 26C19 54 10 46 10 32V14z"/></svg>',
-  handshake: '<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3"><path d="M8 28l12-8 10 8 8-6 18 10-14 14-10-4-8 6-8-6z"/><path d="M28 28l8 8"/></svg>',
-  star: '<svg viewBox="0 0 64 64" fill="currentColor"><path d="M32 6l7 16h17l-14 11 5 17-15-10-15 10 5-17L8 22h17z"/></svg>',
+let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
+let screen='home',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
+const idle=new GuestIdle({onIdle:()=>reset(false)});
+function protectedWork(){return captureBusy||generating||claimBusy||!!cardController;}
+function refreshIdle(){idle.setBusy(protectedWork());}
+function snapshot(){return {screen,category:role,soloHeadshot:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
+function notify(speak=false){voice.note('Authoritative app state: '+JSON.stringify(snapshot()),speak);}
+function show(name){screen=name;$('kiosk').dataset.screen=name;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
+ ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','card'].includes(name)?0:['category','camera'].includes(name)?1:2)));
+ $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
+}
+const voice=new BlueprintVoice({
+ onStatus:(text,ready)=>{$('voiceStatus').textContent=text;$('voiceButton').textContent=ready?'Voice connected':'Talk / retry voice';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(ready?30000:150000);refreshIdle();},
+ onCaption:text=>{$('hostCaptions').textContent=text;},
+ onActivity:()=>idle.touch(),
+ onAudioBlocked:()=>$('audioResume').hidden=false,
+ getState:snapshot,
+ execute:async(name,args)=>{
+  if(name==='get_booth_status')return snapshot();
+  if(name==='end_visit'&&args.confirmed===true){reset(false);return {ended:true};}
+  if(name==='skip_card'&&['home','card'].includes(screen)){skipCard();return snapshot();}
+  if(name==='open_card_camera'&&screen==='home'){openCard();return {accepted:true};}
+  if(name==='choose_category'&&screen==='category'&&roles.some(r=>r[0]===args.category)){chooseRole(args.category);return {accepted:true};}
+  if(name==='take_headshot'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takeHeadshot();return {accepted:true};}
+  return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
+ }
+});
+const sentry=new CameraSentry({video:$('sentryVideo'),canGreet:()=>screen==='home'&&!voice.active,onVisitor:async greeting=>{if(screen==='home'){await voice.start(greeting);idle.start(30000);refreshIdle();}},onStatus:(state,message)=>{$('sentryStatus').textContent=message||(state==='watching'?'Camera welcome is watching for a visitor.':state==='off'?'Camera welcome is off.':'Preparing camera welcome…');$('sentryButton').textContent=state==='off'?'Enable camera welcome':'Stop camera welcome';}});
+function stopCamera(){cameraController?.abort();cameraController=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;for(const id of ['photoVideo','cardVideo'])$(id).srcObject=null;}
+function reset(manual=true){
+ version++;controller.abort();controller=new AbortController();cardController?.abort();cardController=null;
+ stopCamera();voice.stop();if(manual){sentry.disable();sentryEnabledByOperator=false;}else if(sentry.enabled)sentry.finish({immediate:true});
+ generating=false;claimBusy=false;captureBusy=false;attempts=0;gameVersion++;
+ for(const url of [sourceUrl,resultUrl])if(url)URL.revokeObjectURL(url);
+ source=null;result=null;sourceUrl='';resultUrl='';role='';contactConfirmed=false;contact=null;generationError='';
+ for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).value='';
+ for(const id of ['sourceImage','reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
+ $('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='Choose a look that feels like your next chapter.';$('countdown').hidden=true;
+ $('approvePhoto').disabled=false;$('contactConfirm').disabled=false;$('readCard').disabled=false;
+ show('home');idle.start(150000);$('hostCaptions').textContent='A headshot for your next chapter.';
+}
+async function camera(video){
+ stopCamera();const epoch=version,local=new AbortController();cameraController=local;
+ const stream=await startCameraPreview({video,signal:AbortSignal.any([controller.signal,local.signal])});
+ if(epoch!==version||cameraController!==local){stream.getTracks().forEach(t=>t.stop());throw new DOMException('Cancelled','AbortError');}
+ cameraStream=stream;return local;
+}
+async function freeze(video){
+ if(video.readyState<2||!video.videoWidth)throw Error('Wait for a clear camera preview.');
+ const c=document.createElement('canvas');const scale=Math.min(1,1920/video.videoWidth);c.width=Math.round(video.videoWidth*scale);c.height=Math.round(video.videoHeight*scale);
+ c.getContext('2d').drawImage(video,0,0,c.width,c.height);
+ return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('Camera frame could not be saved.')),'image/jpeg',.96));
+}
+async function openCard(){
+ if(!['home','card'].includes(screen))return;sentry.consume();show('card');$('readCard').disabled=true;$('cardStatus').textContent='Starting camera…';const epoch=version;
+ try{await camera($('cardVideo'));if(epoch!==version||screen!=='card')return;$('readCard').disabled=false;$('cardStatus').textContent='The card image is read once and is not saved.';}
+ catch(e){if(epoch===version&&e.name!=='AbortError')$('cardStatus').textContent=cameraErrorMessage(e);}
+}
+function skipCard(){cardController?.abort();cardController=null;stopCamera();sentry.consume();refreshIdle();show('category');}
+async function readCard(){
+ if(cardController||!cameraStream)return;const epoch=version;const op=new AbortController();cardController=op;$('readCard').disabled=true;$('cardStatus').textContent='Reading the printed details…';refreshIdle();
+ try{
+  const b=await freeze($('cardVideo'));const form=new FormData();form.append('image',b,'card.jpg');
+  const r=await fetch('/api/read-card',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,op.signal,AbortSignal.timeout(35000)])});const d=await r.json();
+  if(!r.ok)throw Error(d.error||'The card could not be read.');
+  if(epoch!==version||op.signal.aborted||screen!=='card')return;
+  $('nameInput').value=d.name||'';$('companyInput').value=d.company||'';$('emailInput').value=d.email||'';$('phoneInput').value=d.phone||'';
+  $('cardSummary').textContent='Card read. You can check and correct the details after your photo. First, choose your headshot style.';
+  stopCamera();show('category');
+ }catch(e){if(epoch===version&&!op.signal.aborted)$('cardStatus').textContent=e.message;}
+ finally{if(cardController===op){cardController=null;$('readCard').disabled=false;refreshIdle();}}
+}
+for(const [id,label,line] of roles){const b=document.createElement('button');b.className='role-card';b.dataset.role=id;const title=document.createElement('strong'),desc=document.createElement('span');title.textContent=label;desc.textContent=line;b.append(title,desc);b.onclick=()=>chooseRole(id);$('roleGrid').append(b);}
+async function chooseRole(id){if(!['category','camera','review','errorScreen'].includes(screen)||protectedWork())return;role=id;await openPhoto();}
+async function openPhoto(){
+ const epoch=version;generationError='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR HEADSHOT';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
+ try{await camera($('photoVideo'));if(epoch!==version||screen!=='camera')return;$('takePhoto').disabled=false;$('cameraStatus').textContent='Frame your face and shoulders. Tap when you are ready for a five-second countdown.';notify();}
+ catch(e){if(epoch===version&&e.name!=='AbortError'){$('cameraStatus').textContent=cameraErrorMessage(e);$('takePhoto').disabled=false;$('takePhoto').textContent='Retry camera';}}
+}
+async function takeHeadshot(){
+ if(screen!=='camera'||captureBusy||generating)return;
+ if(!cameraStream){$('takePhoto').textContent='I’m ready · Take headshot';return openPhoto();}
+ const epoch=version,cam=cameraController;captureBusy=true;$('takePhoto').disabled=true;refreshIdle();voice.quiet(true);notify();
+ try{
+  await runCountdown({seconds:5,signal:AbortSignal.any([controller.signal,cam.signal]),onTick:n=>{$('countdown').hidden=false;$('countdown').textContent=n;}});
+  const b=await freeze($('photoVideo'));
+  if(epoch!==version||cam.signal.aborted)return;
+  if(sourceUrl)URL.revokeObjectURL(sourceUrl);source=b;sourceUrl=URL.createObjectURL(b);stopCamera();
+  contactConfirmed=false;result=null;contact=null;show('contact');$('generationStatus').textContent='While your headshot is generated and checked, confirm your mobile number.';
+  generate(); // Deliberately independent of contact entry.
+ }catch(e){if(epoch===version&&!cam.signal.aborted)$('cameraStatus').textContent='Capture did not finish. Tap Take headshot to try again.';}
+ finally{if(epoch===version){captureBusy=false;$('countdown').hidden=true;$('takePhoto').disabled=false;voice.quiet(false);refreshIdle();}}
+}
+async function generate(){
+ if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';refreshIdle();notify();
+ try{
+  const form=new FormData();form.append('image',source,'headshot-source.jpg');form.append('role',role);
+  const r=await fetch('/api/headshot',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(175000)])});
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw Object.assign(Error(d.error||'The headshot did not finish.'),{code:d.code});}
+  const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No photo returned.');
+  const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
+  if(!id||!claim)throw Error('The photo link was incomplete.');
+  if(epoch!==version)return;const url=URL.createObjectURL(blob);const image=new Image();image.src=url;
+  try{await image.decode();}catch(e){URL.revokeObjectURL(url);throw e;}
+  if(epoch!==version){URL.revokeObjectURL(url);return;}
+  if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=url;
+  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your headshot.')};
+  $('generationStatus').textContent='Your photo is ready. Confirm these details to review it.';
+ }catch(e){if(epoch===version&&!controller.signal.aborted){generationError=e.message||'The headshot timed out. Try again.';$('generationStatus').textContent='Your details are safe. Confirm them to see the photo options.';}}
+ finally{if(epoch===version){generating=false;refreshIdle();if(contactConfirmed)advance();notify();}}
+}
+function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]==='1')n=n.slice(1);return /^[2-9]\d{2}[2-9]\d{6}$/.test(n)?n:'';}
+function advance(){
+ if(!contactConfirmed)return;
+ if(result){$('sourceImage').src=sourceUrl;$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;show('review');gameVersion++;return;}
+ if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
+ show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, offer one brief optional question and listen. Do not recite private details.',true);
+}
+$('contactForm').onsubmit=e=>{
+ e.preventDefault();const phone=phoneValue($('phoneInput').value),email=$('emailInput').value.trim();
+ if(!phone){$('contactError').textContent='Enter a valid 10-digit US mobile number.';$('phoneInput').focus();return;}
+ if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){$('contactError').textContent='Correct the email or leave it blank.';return;}
+ $('contactError').textContent='';contact={phone,name:$('nameInput').value.trim(),company:$('companyInput').value.trim(),email};contactConfirmed=true;advance();
 };
-
-const state = {
-  look: LOOKS[0],
-  stream: null,
-  photoBlob: null,
-  resultUrl: "",
-  photoId: "",
-};
-
-let session = 0;
-let abort = new AbortController();
-let cameraAttempt = null;
-let captureAttempt = null;
-let generating = false;
-let progressTimer = 0;
-let thanksTimer = 0;
-let game = null;
-const guestIdle = new GuestIdle({ onIdle: () => reset() });
-
-function show(screen) {
-  kiosk.dataset.screen = screen;
+async function approve(){
+ if(claimBusy||!contactConfirmed||!result||screen!=='review')return;const epoch=version;claimBusy=true;refreshIdle();$('approvePhoto').disabled=true;$('claimError').textContent='Preparing your QR…';
+ try{
+  const r=await fetch('/api/claim-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...contact,id:result.id,claim:result.claim,confirmed:true,likenessApproved:true}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});const d=await r.json();
+  if(!r.ok||!d.ok)throw Error(d.error||'Please try confirming again.');
+  if(epoch!==version)return;const link=location.origin+'/p/'+result.id;
+  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then thank them. No SMS was sent.',true);
+ }catch(e){if(epoch===version)$('claimError').textContent=e.message;}
+ finally{if(epoch===version){claimBusy=false;$('approvePhoto').disabled=false;refreshIdle();}}
 }
-
-function fit() {
-  if (window.innerWidth <= 700) { kiosk.style.transform = "none"; return; }
-  const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
-  kiosk.style.transform = `scale(${scale})`;
+function retake(){if(protectedWork())return;result=null;contactConfirmed=false;contact=null;attempts=0;if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl='';openPhoto();}
+function editContact(){if(claimBusy)return;contactConfirmed=false;show('contact');}
+function buildGame(){
+ const current=++gameVersion,icons=['◇','▤','⚖','✦','⌂','◉'];const deck=[...icons,...icons];for(let i=deck.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[deck[i],deck[j]]=[deck[j],deck[i]];}
+ const grid=$('matchGrid');grid.replaceChildren();let open=[],locked=false,pairs=0;$('matchScore').textContent='0 / 6 pairs';
+ deck.forEach((icon,index)=>{const b=document.createElement('button');b.className='card';b.textContent='?';b.setAttribute('aria-label','Hidden card '+(index+1));b.onclick=()=>{
+ if(current!==gameVersion||locked||b.disabled||open.includes(b))return;b.textContent=icon;b.setAttribute('aria-label',icon);open.push(b);
+ if(open.length===2){const [a,c]=open;if(a.textContent===c.textContent){a.disabled=c.disabled=true;a.classList.add('matched');c.classList.add('matched');open=[];pairs++;$('matchScore').textContent=pairs+' / 6 pairs';}else{locked=true;setTimeout(()=>{if(current!==gameVersion)return;for(const t of open){t.textContent='?';t.setAttribute('aria-label','Hidden card');}open=[];locked=false;},650);}}
+ };grid.append(b);});
 }
-
-function normalizeUsPhone(input) {
-  let digits = String(input || "").replace(/\D/g, "");
-  if (digits.length === 11 && digits.startsWith("1")) digits = digits.slice(1);
-  if (digits.length !== 10) return "";
-  if (digits[0] === "0" || digits[0] === "1" || digits[3] === "0" || digits[3] === "1") return "";
-  return digits;
-}
-
-function stopCamera() {
-  captureAttempt?.abort();
-  captureAttempt = null;
-  $("captureButton").disabled = false;
-  cameraAttempt?.abort();
-  cameraAttempt = null;
-  state.stream?.getTracks().forEach((track) => track.stop());
-  state.stream = null;
-  $("video").srcObject = null;
-}
-
-function reset() {
-  session += 1;
-  generating = false;
-  if (game) game.stopped = true;
-  abort.abort();
-  abort = new AbortController();
-  window.clearInterval(progressTimer);
-  window.clearInterval(thanksTimer);
-  stopCamera();
-  if (state.resultUrl) URL.revokeObjectURL(state.resultUrl);
-  state.photoBlob = null;
-  state.resultUrl = "";
-  state.photoId = "";
-  state.look = LOOKS[0];
-  $("phoneInput").value = "";
-  $("firstName").value = "";
-  $("email").value = "";
-  $("smsConsent").checked = false;
-  $("phoneError").textContent = "";
-  $("countdown").hidden = true;
-  $("resultImage").removeAttribute("src");
-  $("qrImage").removeAttribute("src");
-  $("shortLink").textContent = "";
-  $("waitError").hidden = true;
-  $("matchGrid").replaceChildren();
-  show("home");
-  guestIdle.start(150000);
-}
-
-function renderLooks() {
-  const grid = $("lookGrid");
-  grid.replaceChildren();
-  for (const look of LOOKS) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "look-card";
-    const title = document.createElement("strong");
-    title.textContent = look.name;
-    const line = document.createElement("span");
-    line.textContent = look.line;
-    button.append(title, line);
-    button.addEventListener("click", () => {
-      state.look = look;
-      openCamera();
-    });
-    grid.append(button);
-  }
-}
-
-function setCameraUi(mode) {
-  $("camera").dataset.state = mode;
-  $("cameraLive").hidden = mode === "error";
-  $("cameraDock").hidden = mode === "error";
-  $("cameraError").hidden = mode !== "error";
-  $("captureButton").hidden = mode !== "ready";
-}
-
-async function openCamera() {
-  const ticket = session;
-  stopCamera();
-  const attempt = new AbortController();
-  cameraAttempt = attempt;
-  show("camera");
-  $("cameraLook").textContent = state.look.name;
-  setCameraUi("loading");
-  $("cameraStatus").textContent = "Starting the camera…";
-  $("countdown").hidden = true;
-  guestIdle.setBusy(true);
-  try {
-    const stream = await startCameraPreview({ video: $("video"), signal: attempt.signal });
-    if (ticket !== session || cameraAttempt !== attempt) {
-      stream.getTracks().forEach((track) => track.stop());
-      return;
-    }
-    state.stream = stream;
-    setCameraUi("ready");
-    $("cameraStatus").textContent = "Look at the lens, then tap Take photo.";
-  } catch (error) {
-    if (ticket !== session || error.name === "AbortError") return;
-    setCameraUi("error");
-    $("cameraErrorText").textContent = cameraErrorMessage(error);
-  } finally {
-    if (ticket === session) guestIdle.setBusy(false);
-  }
-}
-
-async function capture() {
-  if (!state.stream || $("captureButton").disabled) return;
-  const ticket = session;
-  const attempt = new AbortController();
-  captureAttempt = attempt;
-  const signal = AbortSignal.any([abort.signal, attempt.signal]);
-  $("captureButton").disabled = true;
-  guestIdle.setBusy(true);
-  $("cameraStatus").textContent = "Hold still.";
-  try {
-    await runCountdown({
-      signal,
-      seconds: 5,
-      onTick: (n) => {
-        $("countdown").textContent = String(n);
-        $("countdown").hidden = false;
-      },
-    });
-    $("countdown").hidden = true;
-    const captureSignal = AbortSignal.any([signal, AbortSignal.timeout(12000)]);
-    const { blob } = await captureStill($("video"), { signal: captureSignal });
-    if (ticket !== session || signal.aborted) return;
-    state.photoBlob = blob;
-    stopCamera();
-    show("phone");
-    $("phoneInput").focus({ preventScroll: true });
-  } catch (error) {
-    if (ticket !== session || signal.aborted) return;
-    $("cameraStatus").textContent = "The photo was not captured. Tap Take photo to try again.";
-  } finally {
-    if (ticket === session) {
-      $("countdown").hidden = true;
-      $("captureButton").disabled = false;
-      guestIdle.setBusy(false);
-    }
-  }
-}
-
-function activeField() {
-  const el = document.activeElement;
-  if (el === $("email") || el === $("firstName") || el === $("phoneInput")) return el;
-  return $("phoneInput");
-}
-
-function typeKey(key) {
-  const input = activeField();
-  let start = input.selectionStart ?? input.value.length;
-  let end = input.selectionEnd ?? start;
-  if (key === "backspace" && start === end) start = Math.max(0, start - 1);
-  input.setRangeText(key === "backspace" ? "" : key, start, end, "end");
-  input.dispatchEvent(new Event("input", { bubbles: true }));
-  input.focus({ preventScroll: true });
-}
-
-function mountKeyboard() {
-  const rows = ["1234567890", "qwertyuiop", "asdfghjkl", "zxcvbnm", "@._- ", "backspace"];
-  const board = $("keyboard");
-  for (const row of rows) {
-    const line = document.createElement("div");
-    line.className = "key-row";
-    const keys = row === "backspace" ? ["backspace"] : [...row];
-    for (const key of keys) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "key";
-      button.textContent = key === "backspace" ? "Delete" : key === " " ? "Space" : key;
-      button.addEventListener("pointerdown", (event) => event.preventDefault());
-      button.addEventListener("click", () => typeKey(key));
-      line.append(button);
-    }
-    board.append(line);
-  }
-  const domains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com"];
-  for (const domain of domains) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.textContent = `@${domain}`;
-    button.addEventListener("pointerdown", (event) => event.preventDefault());
-    button.addEventListener("click", () => {
-      const email = $("email");
-      const local = email.value.trim().split("@")[0];
-      if (!local) {
-        $("phoneError").textContent = "Type the email name first, then choose an ending.";
-        email.focus({ preventScroll: true });
-        return;
-      }
-      email.value = `${local}@${domain}`;
-      email.dispatchEvent(new Event("input", { bubbles: true }));
-      $("phoneError").textContent = "";
-      email.focus({ preventScroll: true });
-    });
-    $("emailDomains").append(button);
-  }
-}
-
-function buildGame() {
-  const names = Object.keys(ICONS);
-  const deck = names.flatMap((name) => [name, name]);
-  for (let i = deck.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
-  }
-  const grid = $("matchGrid");
-  grid.replaceChildren();
-  const cards = deck.map((name) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "card";
-    button.dataset.icon = name;
-    button.setAttribute("aria-label", "Hidden card");
-    button.innerHTML = ICONS[name];
-    button.querySelector("svg").style.visibility = "hidden";
-    grid.append(button);
-    return button;
-  });
-  const board = { open: [], lock: false, stopped: false };
-  for (const card of cards) {
-    card.addEventListener("click", () => flip(card, board));
-  }
-  return board;
-}
-
-function reveal(card, up) {
-  card.classList.toggle("is-up", up);
-  const svg = card.querySelector("svg");
-  if (svg) svg.style.visibility = up || card.classList.contains("is-matched") ? "visible" : "hidden";
-}
-
-function flip(card, board) {
-  if (board.stopped || board.lock || card.classList.contains("is-matched") || card.classList.contains("is-up")) return;
-  reveal(card, true);
-  board.open.push(card);
-  if (board.open.length < 2) return;
-  const [a, b] = board.open;
-  board.open = [];
-  if (a.dataset.icon === b.dataset.icon) {
-    a.classList.add("is-matched");
-    b.classList.add("is-matched");
-    return;
-  }
-  board.lock = true;
-  window.setTimeout(() => {
-    if (board.stopped) return;
-    reveal(a, false);
-    reveal(b, false);
-    board.lock = false;
-  }, 700);
-}
-
-function startProgress() {
-  window.clearInterval(progressTimer);
-  $("progressBar").style.width = "";
-  $("progressBar").classList.add("indeterminate");
-}
-
-function showFailure(message) {
-  window.clearInterval(progressTimer);
-  if (game) game.stopped = true;
-  $("waitError").hidden = false;
-  $("waitErrorText").textContent = message;
-  $("waitStatus").textContent = "The portrait did not finish";
-  guestIdle.setBusy(false);
-}
-
-async function generate() {
-  if (generating || !state.photoBlob) return;
-  generating = true;
-  const ticket = session;
-  const signal = abort.signal;
-  show("wait");
-  $("waitError").hidden = true;
-  $("waitStatus").textContent = "Briefing your mission…";
-  game = buildGame();
-  startProgress();
-  guestIdle.setBusy(true);
-  try {
-    const form = new FormData();
-    form.append("image", state.photoBlob, "guest-photo.jpg");
-    form.append("look", state.look.id);
-    form.append("phone", $("phoneInput").value);
-    form.append("firstName", $("firstName").value);
-    form.append("email", $("email").value);
-    form.append("smsConsent", $("smsConsent").checked ? "true" : "false");
-    const response = await fetch("/api/banana", {
-      method: "POST",
-      body: form,
-      signal: AbortSignal.any([signal, AbortSignal.timeout(160000)]),
-    });
-    if (!response.ok) {
-      const problem = await response.json().catch(() => ({}));
-      throw new Error(problem.error || "The portrait could not be created.");
-    }
-    const blob = await response.blob();
-    if (!blob.size || !String(blob.type).startsWith("image/")) throw new Error("No portrait was returned.");
-    const id = response.headers.get("X-Photo-Id") || "";
-    if (!id) throw new Error("The portrait link was not created.");
-    if (ticket !== session) return;
-    if (state.resultUrl) URL.revokeObjectURL(state.resultUrl);
-    state.resultUrl = URL.createObjectURL(blob);
-    state.photoId = id;
-    $("portraitType").textContent = response.headers.get("X-RPB-Path") === "fallback"
-      ? "The AI look was unavailable. Here is your original photo with the event branding."
-      : "Your AI Legacy Portrait is ready.";
-    const decoded = new Image();
-    decoded.src = state.resultUrl;
-    await decoded.decode();
-    if (ticket !== session) return;
-    window.clearInterval(progressTimer);
-    $("progressBar").classList.remove("indeterminate");
-    $("progressBar").style.width = "100%";
-    if (game) game.stopped = true;
-    showResult();
-  } catch (error) {
-    if (error.name === "AbortError" || ticket !== session) return;
-    showFailure(error.message || "The portrait could not be created. Try again.");
-  } finally {
-    if (ticket === session) generating = false;
-  }
-}
-
-function showResult() {
-  const page = `https://${HOST}/p/${state.photoId}`;
-  $("resultImage").src = state.resultUrl;
-  $("qrImage").src = `/api/qr?text=${encodeURIComponent(page)}`;
-  $("shortLink").textContent = `${HOST}/p/${state.photoId}`;
-  $("assessLink").href = ASSESSMENT;
-  show("result");
-  guestIdle.setBusy(false);
-  guestIdle.start(120000);
-  let left = 120;
-  $("resetLine").textContent = `This screen resets in ${left} seconds.`;
-  window.clearInterval(thanksTimer);
-  thanksTimer = window.setInterval(() => {
-    left -= 1;
-    if (left <= 0) {
-      window.clearInterval(thanksTimer);
-      reset();
-      return;
-    }
-    $("resetLine").textContent = `This screen resets in ${left} seconds.`;
-  }, 1000);
-}
-
-function submitPhone(event) {
-  event.preventDefault();
-  const phone = normalizeUsPhone($("phoneInput").value);
-  const email = $("email").value.trim();
-  if (!phone) {
-    $("phoneError").textContent = "Enter a 10-digit US mobile number.";
-    $("phoneInput").focus({ preventScroll: true });
-    return;
-  }
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    $("phoneError").textContent = "Email looks incomplete, or clear it to continue.";
-    $("email").focus({ preventScroll: true });
-    return;
-  }
-  if (!state.photoBlob) {
-    $("phoneError").textContent = "Take a photo first.";
-    return;
-  }
-  $("phoneError").textContent = "";
-  generate();
-}
-
-$("startButton").addEventListener("click", () => {
-  renderLooks();
-  show("looks");
-});
-$("looksBack").addEventListener("click", () => show("home"));
-$("cameraRetry").addEventListener("click", openCamera);
-$("cameraBack").addEventListener("click", () => {
-  stopCamera();
-  guestIdle.setBusy(false);
-  renderLooks();
-  show("looks");
-});
-$("captureButton").addEventListener("click", capture);
-$("phoneBack").addEventListener("click", openCamera);
-$("phoneForm").addEventListener("submit", submitPhone);
-$("privacyLink").addEventListener("click", (event) => event.stopPropagation());
-$("generateRetry").addEventListener("click", generate);
-$("waitRetake").addEventListener("click", openCamera);
-$("doneButton").addEventListener("click", reset);
-document.addEventListener("pointerdown", () => {
-  if (kiosk.dataset.screen !== "wait") guestIdle.touch();
-});
-
-mountKeyboard();
-renderLooks();
-fit();
-window.addEventListener("resize", fit);
-show("home");
-guestIdle.start(150000);
-window.addEventListener("pagehide", () => { reset(); guestIdle.stop(); });
-document.addEventListener("keydown", () => guestIdle.touch());
-
-if (matchMedia("(max-width:700px)").matches) { $("phoneInput").inputMode="tel"; $("email").inputMode="email"; $("firstName").inputMode="text"; }
+for(const id of ['phoneInput','nameInput','companyInput','emailInput']){$(id).onfocus=()=>keyboardInput=$(id);$(id).oninput=()=>{contactConfirmed=false;idle.touch();};}
+function toggleKeyboard(){const open=$('keyboard').hidden;$('keyboard').hidden=!open;$('keyboardToggle').textContent=open?'Hide touch keyboard':'Show touch keyboard';for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).inputMode=open?'none':id==='phoneInput'?'tel':id==='emailInput'?'email':'text';}
+let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-','SPACE SHIFT LEFT RIGHT DELETE']){const el=document.createElement('div');el.className='key-row';for(const key of row.includes(' ')?row.split(' '):[...row]){const b=document.createElement('button');b.type='button';b.textContent=key;b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{const t=keyboardInput;let start=t.selectionStart??t.value.length,end=t.selectionEnd??start;if(key==='SHIFT'){shift=!shift;b.setAttribute('aria-pressed',shift);return;}if(key==='LEFT'||key==='RIGHT'){const p=Math.max(0,Math.min(t.value.length,start+(key==='LEFT'?-1:1)));t.setSelectionRange(p,p);}else{if(key==='DELETE'&&start===end)start=Math.max(0,start-1);const s=key==='DELETE'?'':key==='SPACE'?' ':shift?key.toUpperCase():key;if(t.value.length-end+start+s.length<=t.maxLength)t.setRangeText(s,start,end,'end');t.dispatchEvent(new Event('input'));}t.focus({preventScroll:true});};el.append(b);}$('keyboard').append(el);}
+$('keyboardToggle').onclick=toggleKeyboard;
+$('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
+$('categoryBack').onclick=()=>show('home');$('takePhoto').onclick=takeHeadshot;
+$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('category');};
+$('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
+$('reviewContact').onclick=editContact;$('editContact').onclick=editContact;
+$('retryPhoto').onclick=()=>{if(generating||attempts>=3)return;generationError='';show('wait');buildGame();generate();};
+$('doneButton').onclick=()=>reset(false);$('resetButton').onclick=()=>reset(true);
+$('voiceButton').onclick=()=>voice.start();$('voiceStop').onclick=()=>voice.stop();$('audioResume').onclick=()=>voice.resumeAudio();
+$('sentryButton').onclick=async()=>{if(sentry.enabled){sentry.disable();sentryEnabledByOperator=false;return;}if(screen!=='home')return;try{await voice.prepareAudio();const m=await navigator.mediaDevices.getUserMedia({audio:true});m.getTracks().forEach(t=>t.stop());sentryEnabledByOperator=true;await sentry.enable();}catch{$('sentryStatus').textContent='Camera welcome needs camera and microphone permission. Touch works without microphone access.';}};
+document.addEventListener('pointerdown',()=>idle.touch());document.addEventListener('keydown',()=>idle.touch());
+document.addEventListener('visibilitychange',()=>{if(document.hidden){sentry.disable();sentryEnabledByOperator=false;reset(true);idle.stop();}});
+window.addEventListener('pagehide',()=>{sentry.disable();reset(true);idle.stop();});
+idle.start(150000);show('home');$('hostCaptions').textContent='A headshot for your next chapter.';

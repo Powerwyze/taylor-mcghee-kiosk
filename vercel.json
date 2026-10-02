@@ -5,27 +5,76 @@
     {
       "source": "/(.*)",
       "headers": [
-        { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(self), microphone=(), geolocation=()" }
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(self), microphone=(self), geolocation=()"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/p/:id", "destination": "/api/download?id=:id" },
-    { "source": "/i/:id", "destination": "/api/image?id=:id" }
+    {
+      "source": "/p/:id",
+      "destination": "/api/download?id=:id"
+    },
+    {
+      "source": "/i/:id",
+      "destination": "/api/image?id=:id"
+    }
   ],
   "functions": {
     "api/banana.js": {
       "maxDuration": 300,
       "includeFiles": "{lib/logos/**,public/assets/logos/**}"
     },
-    "api/download.js": { "maxDuration": 30 },
-    "api/image.js": { "maxDuration": 30 },
-    "api/unlock.js": { "maxDuration": 30 },
-    "api/leads.js": { "maxDuration": 30 },
-    "api/send-photo.js": { "maxDuration": 30 },
-    "api/health.js": { "maxDuration": 15 },
-    "api/qr.js": { "maxDuration": 15 }
+    "api/download.js": {
+      "maxDuration": 30
+    },
+    "api/image.js": {
+      "maxDuration": 30
+    },
+    "api/unlock.js": {
+      "maxDuration": 30
+    },
+    "api/leads.js": {
+      "maxDuration": 30
+    },
+    "api/send-photo.js": {
+      "maxDuration": 30
+    },
+    "api/health.js": {
+      "maxDuration": 15
+    },
+    "api/qr.js": {
+      "maxDuration": 15
+    },
+    "api/headshot.js": {
+      "maxDuration": 240,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+    },
+    "api/read-card.js": {
+      "maxDuration": 60,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+    },
+    "api/claim-photo.js": {
+      "maxDuration": 60,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+    },
+    "api/host-session.js": {
+      "maxDuration": 60,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+    },
+    "api/host-greeting.js": {
+      "maxDuration": 60,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+    }
   }
 }

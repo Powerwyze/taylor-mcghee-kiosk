@@ -1,0 +1,55 @@
+name: Build Blueprint avatar remotely
+on:
+  push:
+    branches: [legacycon-2026]
+    paths: [scripts/create-host-avatar.py, .github/workflows/blueprint-assets.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: legacycon-2026
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: sudo apt-get update -qq && sudo apt-get install -y blender
+      - run: blender --background --python-exit-code 1 --python scripts/create-host-avatar.py
+      - name: Vendor pinned renderer and presence detector
+        run: |
+          mkdir -p public/vendor/three/addons/loaders public/vendor/three/addons/utils public/vendor/vision public/assets tests/fixtures
+          npm pack three@0.180.0 --pack-destination "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/three"
+          tar -xzf "$RUNNER_TEMP/three-0.180.0.tgz" -C "$RUNNER_TEMP/three"
+          cp "$RUNNER_TEMP/three/package/build/three.module.min.js" public/vendor/three/
+          cp "$RUNNER_TEMP/three/package/build/three.core.min.js" public/vendor/three/
+          cp "$RUNNER_TEMP/three/package/examples/jsm/loaders/GLTFLoader.js" public/vendor/three/addons/loaders/
+          cp "$RUNNER_TEMP/three/package/examples/jsm/utils/BufferGeometryUtils.js" public/vendor/three/addons/utils/
+          cp "$RUNNER_TEMP/three/package/LICENSE" public/vendor/three/LICENSE
+          npm pack @mediapipe/tasks-vision@0.10.21 --pack-destination "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/vision"
+          tar -xzf "$RUNNER_TEMP/mediapipe-tasks-vision-0.10.21.tgz" -C "$RUNNER_TEMP/vision"
+          cp "$RUNNER_TEMP/vision/package/vision_bundle.mjs" public/vendor/vision/
+          cp -R "$RUNNER_TEMP/vision/package/wasm" public/vendor/vision/
+          curl -fL https://raw.githubusercontent.com/google-ai-edge/mediapipe/master/LICENSE -o public/vendor/vision/LICENSE
+          curl -fL https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/1/efficientdet_lite0.tflite -o public/assets/person-detector.tflite
+          curl -fL https://storage.googleapis.com/mediapipe-assets/portrait.jpg -o tests/fixtures/person.jpg
+      - name: Commit generated assets
+        run: |
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add public/assets/blueprint* public/assets/person-detector.tflite public/vendor/three public/vendor/vision design/blueprint.blend tests/fixtures
+          git commit -m "Build original RPB Blueprint avatar and vendor runtime" || test -z "$(git status --porcelain)"
+          git pull --rebase origin legacycon-2026
+          git push origin HEAD:legacycon-2026
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: blueprint-avatar
+          path: |
+            public/assets/blueprint*
+            design/blueprint.blend
