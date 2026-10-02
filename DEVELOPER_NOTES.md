@@ -26,3 +26,27 @@ QR delivery only; no photo emails, no SMS messages or marketing campaigns. Email
 
 ## Validation
 Remote Node tests cover backup boundaries, headshot prompts and claim validation. Remote Playwright covers card success/skip/failure, concurrent generation/contact, review before QR, errors/retries, reset, voice failure recovery and portrait/mobile layouts. Mocked tests do not prove live providers. Separate remote smoke tests record actual voice, card OCR, image check and QR storage results without printing contacts or secrets.
+
+
+## October 2, 2026 verification checkpoint
+DEMO-013 updates the existing RPB LegacyCon kiosk into a solo headshot experience while preserving QR downloads and matching-phone confirmation. Production: https://rpb-legacycon-kiosk.vercel.app
+
+Guests can scan a business card or skip it, choose Entrepreneur, Tech enthusiast, VC, Law firm, Blue collar, Executive or Community leader, and take a photo with a cancelable five-second countdown. Generation starts immediately while they review or enter their mobile number. The memory game fills remaining wait time. Cards are transient OCR inputs, editable contact drafts require touch confirmation, and no SMS or email is sent.
+
+Blueprint is an original animated RPB legacy-book character with a matching fallback, GPT-Live 1 voice, speech captions, interruption support, optional camera welcome and independent touch controls. Voice may select a style or start an explicitly confirmed capture, but cannot confirm contacts, approve likeness or issue the QR.
+
+Headshots use a conservative high-fidelity image edit that preserves facial features and clothing. Separate source and result checks reject unusable captures or appearance drift. Guests review source and result side by side before approving. Unavailable/rejected AI edits use a clearly labeled original-photo fallback. An unguessable claim capability binds the photo to the confirmed phone only after likeness approval; wrong-number unlocks remain denied.
+
+Existing primary credentials are preserved. Shared OPENAI_BACKUP is linked for Production/Preview, with one same-payload retry only for confirmed credit/billing quota failures. Secrets never enter the browser or repository. Authoring, Blender generation, dependency installation and verification run remotely in GitHub Actions/Vercel.
+
+Validation: automated Node tests and Chromium flow checks pass for countdown cancellation, concurrent contact collection, voice failure preserving work, contact/likeness gates, session reset and mobile/portrait layouts. The actual 3D avatar and fallback were visually inspected. Live provider verification details follow below.
+
+Operator: refresh the kiosk, tap Talk with Blueprint and allow microphone/camera. Optionally enable camera welcome once. Guests can always use touch. QR delivery is not SMS, and matching a phone number is not proof of phone ownership. AI likeness is not guaranteed; the on-screen guest review is required.
+
+Rollback: dpl_HkBUJN48SYwRBeqRLU59AP3X73Ww. Branch remains legacycon-2026; no changes to the excluded Urban Golf kiosk.
+
+Final verification: remote regression run 37075969303 passed; live run 37075969337 passed. GPT-Live session startup, received audio packets/playback, outgoing captions and delegated skip/category actions passed without protocol errors. Real business-card OCR, real image generation, independent quality check, encrypted photo/lead persistence, contact and likeness approval gates, QR rendering and matching/wrong-number unlocks were exercised. All three paid image trials were rejected by the conservative likeness checker; original-photo fallback was verified. No accepted AI-edited likeness is claimed. User-specific likeness still requires a fresh camera photo and guest review.
+
+A live retry test exposed stale Blob metadata returning an unbound phone after approval. Metadata updates now use immutable revision URLs, following Vercel Blob's caching guidance (https://vercel.com/docs/vercel-blob), and a regression test verifies that an old base record cannot undo confirmation. Final rapid wrong/correct-phone check returned 401 then 200.
+
+Reviewed app source: ad050e361ae08513400f58105bb2f40261de8f0e; preview deployment dpl_Bv4f7XWyBEmuUBw8TZSmVvHsfHxb, promoted to production.
