@@ -34,6 +34,8 @@ const state = {
 let session = 0;
 let abort = new AbortController();
 let cameraAttempt = null;
+let captureAttempt = null;
+let generating = false;
 let progressTimer = 0;
 let thanksTimer = 0;
 let game = null;
@@ -44,6 +46,7 @@ function show(screen) {
 }
 
 function fit() {
+  if (window.innerWidth <= 700) { kiosk.style.transform = "none"; return; }
   const scale = Math.min(window.innerWidth / 1080, window.innerHeight / 1920);
   kiosk.style.transform = `scale(${scale})`;
 }
@@ -57,6 +60,9 @@ function normalizeUsPhone(input) {
 }
 
 function stopCamera() {
+  captureAttempt?.abort();
+  captureAttempt = null;
+  $("captureButton").disabled = false;
   cameraAttempt?.abort();
   cameraAttempt = null;
   state.stream?.getTracks().forEach((track) => track.stop());
@@ -66,6 +72,8 @@ function stopCamera() {
 
 function reset() {
   session += 1;
+  generating = false;
+  if (game) game.stopped = true;
   abort.abort();
   abort = new AbortController();
   window.clearInterval(progressTimer);
@@ -88,7 +96,7 @@ function reset() {
   $("waitError").hidden = true;
   $("matchGrid").replaceChildren();
   show("home");
-  guestIdle.start(70000);
+  guestIdle.start(150000);
 }
 
 function renderLooks() {
@@ -151,14 +159,16 @@ async function openCamera() {
 async function capture() {
   if (!state.stream || $("captureButton").disabled) return;
   const ticket = session;
-  const signal = abort.signal;
+  const attempt = new AbortController();
+  captureAttempt = attempt;
+  const signal = AbortSignal.any([abort.signal, attempt.signal]);
   $("captureButton").disabled = true;
   guestIdle.setBusy(true);
   $("cameraStatus").textContent = "Hold still.";
   try {
     await runCountdown({
       signal,
-      seconds: 3,
+      seconds: 5,
       onTick: (n) => {
         $("countdown").textContent = String(n);
         $("countdown").hidden = false;
@@ -167,7 +177,7 @@ async function capture() {
     $("countdown").hidden = true;
     const captureSignal = AbortSignal.any([signal, AbortSignal.timeout(12000)]);
     const { blob } = await captureStill($("video"), { signal: captureSignal });
-    if (ticket !== session) return;
+    if (ticket !== session || signal.aborted) return;
     state.photoBlob = blob;
     stopCamera();
     show("phone");
@@ -296,13 +306,9 @@ function flip(card, board) {
 }
 
 function startProgress() {
-  const began = performance.now();
-  $("progressBar").style.width = "4%";
   window.clearInterval(progressTimer);
-  progressTimer = window.setInterval(() => {
-    const ratio = Math.min(0.92, (performance.now() - began) / 52000);
-    $("progressBar").style.width = `${Math.round(ratio * 100)}%`;
-  }, 200);
+  $("progressBar").style.width = "";
+  $("progressBar").classList.add("indeterminate");
 }
 
 function showFailure(message) {
@@ -315,6 +321,8 @@ function showFailure(message) {
 }
 
 async function generate() {
+  if (generating || !state.photoBlob) return;
+  generating = true;
   const ticket = session;
   const signal = abort.signal;
   show("wait");
@@ -348,13 +356,23 @@ async function generate() {
     if (state.resultUrl) URL.revokeObjectURL(state.resultUrl);
     state.resultUrl = URL.createObjectURL(blob);
     state.photoId = id;
+    $("portraitType").textContent = response.headers.get("X-RPB-Path") === "fallback"
+      ? "The AI look was unavailable. Here is your original photo with the event branding."
+      : "Your AI Legacy Portrait is ready.";
+    const decoded = new Image();
+    decoded.src = state.resultUrl;
+    await decoded.decode();
+    if (ticket !== session) return;
     window.clearInterval(progressTimer);
+    $("progressBar").classList.remove("indeterminate");
     $("progressBar").style.width = "100%";
     if (game) game.stopped = true;
     showResult();
   } catch (error) {
     if (error.name === "AbortError" || ticket !== session) return;
     showFailure(error.message || "The portrait could not be created. Try again.");
+  } finally {
+    if (ticket === session) generating = false;
   }
 }
 
@@ -411,6 +429,7 @@ $("looksBack").addEventListener("click", () => show("home"));
 $("cameraRetry").addEventListener("click", openCamera);
 $("cameraBack").addEventListener("click", () => {
   stopCamera();
+  guestIdle.setBusy(false);
   renderLooks();
   show("looks");
 });
@@ -430,8 +449,8 @@ renderLooks();
 fit();
 window.addEventListener("resize", fit);
 show("home");
-guestIdle.start(70000);
-window.addEventListener("pagehide", () => {
-  stopCamera();
-  abort.abort();
-});
+guestIdle.start(150000);
+window.addEventListener("pagehide", () => { reset(); guestIdle.stop(); });
+document.addEventListener("keydown", () => guestIdle.touch());
+
+if (matchMedia("(max-width:700px)").matches) { $("phoneInput").inputMode="tel"; $("email").inputMode="email"; $("firstName").inputMode="text"; }

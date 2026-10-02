@@ -129,3 +129,9 @@ Set on the Vercel project. Do not commit values.
 2. If the card text should change, edit `LOOKS` in `public/app.js`.
 3. Commit to `legacycon-2026` and deploy production on project `rpb-legacycon-kiosk`.
 4. `GET /api/health` should still show `openai: true` and `storage: blob:rpb-legacycon`.
+
+## October 2 reliability follow-up
+
+The touch/QR flow is retained. No SMS provider is activated. Countdown is five seconds and Back cancels it. Generation is locked against duplicate taps; reset invalidates late responses. Phone-sized screens reflow with native keyboards. Waiting uses an indeterminate indicator, not invented progress. Plain-photo fallback is explicitly labeled to guests.
+
+OpenAI retries once with a distinct OPENAI_BACKUP only on confirmed credit/billing quota errors, sharing the original 90-second deadline and payload. Network failures, ordinary rate limits and authentication failures are not replayed. The previous automatic AI Gateway attempt is removed. The existing project-specific primary key is preserved; shared backup is linked in Production/Preview. GitHub Actions runs isolated mocked provider tests and browser checks; these do not establish live AI success.

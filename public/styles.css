@@ -259,3 +259,37 @@ h2 { font-size: 64px; line-height: 1.05; padding: 0 48px; }
 #doneButton { width: 100%; }
 .reset-line { margin: 0; font-size: 24px; }
 #result .legal { margin: 0; text-align: center; }
+
+/* Keep the kiosk layout; reflow rather than shrink touch controls on phones. */
+.delivery-note { margin: 4px 0; font-size: 24px; line-height: 1.35; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 4px solid white; outline-offset: 4px; }
+.progress span.indeterminate { width: 28%; animation: waiting 1.8s ease-in-out infinite alternate; }
+@keyframes waiting { from { transform: translateX(0); } to { transform: translateX(250%); } }
+@media (prefers-reduced-motion: reduce) { .progress span.indeterminate { animation: none; width:100%; opacity:.6; } }
+@media (max-width:700px) {
+ html, body { height:auto; min-height:100%; overflow:auto; }
+ .frame { height:auto; min-height:100dvh; align-items:flex-start; }
+ .kiosk { width:100%; height:auto; min-height:100dvh; flex:none; }
+ .screen { min-height:100dvh; height:auto; }
+ .home-copy { padding:48px 24px 24px; }
+ .eyebrow { font-size:14px; } .agents { font-size:16px; }
+ h1 { font-size:54px; } h2, #phone h2 { font-size:32px; padding:0 8px; }
+ .lede { font-size:22px; } .btn { font-size:19px; min-height:56px; padding:12px 18px; }
+ .btn-quiet { min-height:44px; font-size:16px; }
+ .legal { font-size:12px; margin:12px 20px; } .logo-band { height:100px; padding:12px; gap:12px; }
+ .logo-band img { height:70px; } .bar { padding:16px 8px; } .bar-brand { font-size:13px; }
+ .look-grid { padding:16px; gap:16px; } .look-card { min-height:160px; padding:20px; }
+ .look-card strong { font-size:30px; } .look-card span { font-size:18px; }
+ #camera { height:100dvh; } .dock,.panel { left:12px; right:12px; bottom:12px; padding:16px; }
+ .dock-title,#cameraStatus { font-size:18px; } .countdown { font-size:150px; }
+ #phone { padding:12px; } .field { font-size:16px; } .field input { height:52px; font-size:20px; padding:8px; }
+ .optional-row { grid-template-columns:1fr; } .consent { gap:10px; padding:12px; }
+ .consent p { font-size:15px; } .consent input { width:28px;height:28px; }
+ .delivery-note { font-size:16px; } .field-error { font-size:16px; }
+ .keyboard,.domain-row { display:none; }
+ #wait { padding:24px 16px; } .wait-kicker { font-size:22px; } .match-grid { min-height:360px; gap:8px; }
+ .tag-line { font-size:18px; } .panel h2 { font-size:28px; }
+ #resultImage { height:auto; max-height:55dvh; } .result-foot { padding:16px; gap:16px; }
+ .qr { width:min(72vw,320px); height:auto; } .short-link { font-size:18px; }
+ #assessLink { font-size:18px; min-height:56px; } .reset-line { font-size:16px; }
+}

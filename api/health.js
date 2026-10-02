@@ -3,6 +3,7 @@ const { storageKind } = require("../lib/storage");
 
 const KEYS = [
   "OPENAI_API_KEY",
+  "OPENAI_BACKUP",
   "OPENAI_API_KIOSK_KEY",
   "OPEN_API_KEY",
   "RESEND_API_KEY",

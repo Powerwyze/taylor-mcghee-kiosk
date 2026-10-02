@@ -50,77 +50,24 @@ async function compressGuest(buffer) {
 }
 
 async function editImage({ prompt, fileBuffer }) {
-  const directKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KIOSK_KEY || process.env.OPEN_API_KEY || "";
-  const oidc = process.env.VERCEL_OIDC_TOKEN || "";
-  const size = process.env.OPENAI_IMAGE_SIZE || "1024x1536";
-  const quality = process.env.OPENAI_IMAGE_QUALITY || "medium";
-  const attempts = [];
-  if (directKey) {
-    attempts.push({
-      url: OPENAI_URL,
-      key: directKey,
-      model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
-    });
+  const { openaiRequest } = require('../lib/openai-request');
+  const fd = new FormData();
+  fd.append('model', process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1');
+  fd.append('prompt', prompt);
+  fd.append('size', process.env.OPENAI_IMAGE_SIZE || '1024x1536');
+  fd.append('quality', process.env.OPENAI_IMAGE_QUALITY || 'medium');
+  fd.append('n', '1');
+  fd.append('image', new Blob([fileBuffer], {type:'image/jpeg'}), 'guest.jpg');
+  const signal = AbortSignal.timeout(90000);
+  const response = await openaiRequest(OPENAI_URL, {method:'POST', body:fd, signal});
+  if (!response.ok) throw Object.assign(new Error('Image provider unavailable'), {code:'OPENAI'});
+  const item = (await response.json())?.data?.[0];
+  if (item?.b64_json) return Buffer.from(item.b64_json, 'base64');
+  if (item?.url) {
+    const image = await fetch(item.url, {signal});
+    if (image.ok) return Buffer.from(await image.arrayBuffer());
   }
-  if (oidc) {
-    attempts.push({
-      url: GATEWAY_URL,
-      key: oidc,
-      model: "openai/gpt-image-1",
-    });
-  }
-  if (!attempts.length) {
-    const error = new Error("no-image-key");
-    error.code = "NO_KEY";
-    throw error;
-  }
-
-  let last = null;
-  for (const attempt of attempts) {
-    const fd = new FormData();
-    fd.append("model", attempt.model);
-    fd.append("prompt", prompt);
-    fd.append("size", size);
-    fd.append("quality", quality);
-    fd.append("n", "1");
-    fd.append("image", new Blob([fileBuffer], { type: "image/jpeg" }), "guest.jpg");
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 90000);
-    try {
-      const response = await fetch(attempt.url, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${attempt.key}` },
-        body: fd,
-        signal: controller.signal,
-      });
-      if (!response.ok) {
-        let detail = "";
-        try {
-          const problem = await response.json();
-          detail = String(problem?.error?.code || problem?.error?.type || problem?.error?.message || "").slice(0, 140);
-        } catch (_) {}
-        last = `status ${response.status}${detail ? ` ${detail}` : ""}`;
-        console.error("image edit failed", response.status, detail);
-        continue;
-      }
-      const data = await response.json();
-      const item = data?.data?.[0];
-      if (item?.b64_json) return Buffer.from(item.b64_json, "base64");
-      if (item?.url) {
-        const image = await fetch(item.url);
-        return Buffer.from(await image.arrayBuffer());
-      }
-      last = "empty";
-    } catch (error) {
-      last = error.name || "fetch";
-      console.error("image edit error", error.name || "fetch");
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  const error = new Error(last || "openai");
-  error.code = "OPENAI";
-  throw error;
+  throw Object.assign(new Error('No image returned'), {code:'OPENAI'});
 }
 
 module.exports = async function handler(req, res) {
