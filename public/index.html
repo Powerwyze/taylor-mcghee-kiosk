@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#02304A">
+<title>Your Legacy Portrait · RPB Law Firm</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,560;9..144,700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="frame">
+  <div class="kiosk" id="kiosk" data-screen="home">
+
+    <section class="screen" id="home" aria-label="Welcome">
+      <div class="home-copy">
+        <p class="eyebrow">The Mission is Possible</p>
+        <p class="agents">Agents of Legacy · LegacyCon 2026</p>
+        <h1>Your Legacy Portrait</h1>
+        <p class="lede">A mission briefing for the room. Step in. Leave with a portrait.</p>
+        <button class="btn btn-primary" id="startButton" type="button">Take my Legacy Portrait</button>
+      </div>
+      <p class="legal">General information, not legal advice; does not create an attorney-client relationship.</p>
+      <div class="logo-band" aria-label="RPB Law Firm, BPN, and PowerWyze">
+        <img src="/assets/logos/rpb.png" alt="RPB Law Firm">
+        <img src="/assets/logos/bpn.png" alt="Black Professionals Network">
+        <img src="/assets/logos/powerwyze.png" alt="PowerWyze">
+      </div>
+    </section>
+
+    <section class="screen" id="looks" aria-label="Choose a look">
+      <header class="bar">
+        <p class="bar-brand">RPB Law Firm</p>
+        <button class="btn-quiet" id="looksBack" type="button">Back</button>
+      </header>
+      <h2>Choose your look</h2>
+      <div class="look-grid" id="lookGrid"></div>
+    </section>
+
+    <section class="screen" id="camera" data-state="loading" aria-label="Camera">
+      <div class="stage" id="cameraLive">
+        <video id="video" autoplay playsinline muted></video>
+        <p class="countdown" id="countdown" hidden>3</p>
+      </div>
+      <div class="panel" id="cameraError" hidden>
+        <h2>Camera needed</h2>
+        <p id="cameraErrorText" role="alert"></p>
+        <button class="btn btn-primary" id="cameraRetry" type="button">Try again</button>
+      </div>
+      <div class="dock" id="cameraDock">
+        <p class="dock-title" id="cameraLook"></p>
+        <p id="cameraStatus" role="status">Starting the camera…</p>
+        <button class="btn btn-primary" id="captureButton" type="button" hidden>Take photo</button>
+        <button class="btn btn-secondary" id="cameraBack" type="button">Back</button>
+      </div>
+    </section>
+
+    <section class="screen" id="phone" aria-label="Mobile number">
+      <header class="bar">
+        <p class="bar-brand">Photo captured</p>
+        <button class="btn-quiet" id="phoneBack" type="button">Retake</button>
+      </header>
+      <form id="phoneForm" novalidate>
+        <h2>Your mobile number</h2>
+        <label class="field" for="phoneInput">Mobile number
+          <input id="phoneInput" name="phone" type="text" inputmode="none" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="20" required>
+        </label>
+        <div class="consent">
+          <input id="smsConsent" type="checkbox">
+          <p id="smsConsentText">I agree to receive text messages from PowerWyze on behalf of RPB Law Firm, including my portrait link and event follow-ups. Msg frequency varies. Msg &amp; data rates may apply. Reply STOP to opt out, HELP for help. Consent is not a condition of purchase. Privacy: <a id="privacyLink" href="https://powerwyze.com/privacy" target="_blank" rel="noopener noreferrer">powerwyze.com/privacy</a></p>
+        </div>
+        <div class="optional-row">
+          <label class="field" for="firstName">First name <span>optional</span>
+            <input id="firstName" name="firstName" type="text" inputmode="none" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="80">
+          </label>
+          <label class="field" for="email">Email <span>optional</span>
+            <input id="email" name="email" type="text" inputmode="none" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="254">
+          </label>
+        </div>
+        <p class="field-error" id="phoneError" role="alert"></p>
+        <div class="domain-row" id="emailDomains" aria-label="Email endings"></div>
+        <div class="keyboard" id="keyboard" aria-label="Touch keyboard"></div>
+        <button class="btn btn-primary" id="phoneSubmit" type="submit">Create my portrait</button>
+        <p class="legal">General information, not legal advice; does not create an attorney-client relationship.</p>
+      </form>
+    </section>
+
+    <section class="screen" id="wait" aria-label="Creating portrait">
+      <p class="wait-kicker" id="waitStatus">Briefing your mission…</p>
+      <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+      <h2>Memory match</h2>
+      <div class="match-grid" id="matchGrid"></div>
+      <p class="tag-line">Post and tag @rpblawfirm for a chance to win a free strategy session</p>
+      <div class="panel" id="waitError" hidden>
+        <h2>The portrait did not finish</h2>
+        <p id="waitErrorText" role="alert">Try again in a moment.</p>
+        <button class="btn btn-primary" id="generateRetry" type="button">Try again</button>
+        <button class="btn btn-secondary" id="waitRetake" type="button">Retake photo</button>
+      </div>
+    </section>
+
+    <section class="screen" id="result" aria-label="Your portrait">
+      <img id="resultImage" alt="Your Legacy Portrait">
+      <div class="result-foot">
+        <img id="qrImage" class="qr" width="520" height="520" alt="QR code to open your portrait on your phone">
+        <p class="short-link" id="shortLink"></p>
+        <a class="btn btn-secondary" id="assessLink" href="https://assessment.rpblawfirm.com">Take the RPB Business &amp; Brand Assessment</a>
+        <button class="btn btn-primary" id="doneButton" type="button">Done</button>
+        <p class="reset-line" id="resetLine" role="status"></p>
+        <p class="legal">General information, not legal advice; does not create an attorney-client relationship.</p>
+      </div>
+    </section>
+
+  </div>
+</div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

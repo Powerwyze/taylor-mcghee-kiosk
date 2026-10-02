@@ -1,0 +1,17 @@
+{
+  "name": "rpb-legacycon-kiosk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "DEMO-013 RPB Law Firm LegacyCon 2026 portrait kiosk",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
+    "@vercel/blob": "^0.27.3",
+    "formidable": "^3.5.2",
+    "nodemailer": "^6.10.0",
+    "qrcode": "^1.5.4",
+    "sharp": "^0.34.2"
+  }
+}
