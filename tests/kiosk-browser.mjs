@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 import {createServer} from 'node:http';
 import {readFile,mkdir} from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;const file=p==='/'?'/index.html':p;const data=await readFile('public'+file);res.setHeader('Content-Type',file.endsWith('.webm')?'video/webm':file.endsWith('.mp4')?'video/mp4':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':file.endsWith('.jpg')?'image/jpeg':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}}).listen(4173);
+const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;const file=p==='/'?'/index.html':p;const data=await readFile('public'+file);res.setHeader('Content-Type',file.endsWith('.webm')?'video/webm':file.endsWith('.mp4')?'video/mp4':file.endsWith('.js')||file.endsWith('.mjs')?'text/javascript':file.endsWith('.wasm')?'application/wasm':file.endsWith('.tflite')?'application/octet-stream':file.endsWith('.css')?'text/css':file.endsWith('.svg')?'image/svg+xml':file.endsWith('.png')?'image/png':file.endsWith('.jpg')?'image/jpeg':'text/html');res.end(data);}catch{res.writeHead(404);res.end();}}).listen(4173);
 await mkdir('artifacts',{recursive:true});const browser=await chromium.launch({args:['--use-fake-ui-for-media-stream','--use-fake-device-for-media-stream','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:1080,height:1920},permissions:['camera','microphone']});let generated=0,claims=0,release;const errors=[];page.on('pageerror',e=>errors.push(e.message));
