@@ -1,5 +1,5 @@
-# RPB LegacyCon caricature kiosk (kiosk2)
+# RPB LegacyCon expanded-backdrop photo booth (kiosk2)
 
-A separate LegacyCon kiosk at https://rpb-legacycon-kiosk2.vercel.app/ . Guests choose a professional big-head cartoon style, take one camera photo, optionally scan a business card, confirm their mobile number, review the generated caricature, and receive a QR link. No SMS or email is sent.
+The kiosk at https://rpb-legacycon-kiosk2.vercel.app/ takes a regular camera photo, preserves the captured people and clothing, and extends the visible physical backdrop into a wider 1536 × 1152 image. It keeps optional business-card scanning, mobile-number confirmation, review and QR delivery. No SMS or email is sent.
 
-Source branch: `legacycon-kiosk2-caricature`. This branch is deployed to Vercel project `rpb-legacycon-kiosk2`; the original `legacycon-2026` branch and kiosk remain unchanged. The two deployments currently share the same Vercel Blob store.
+Source branch: `legacycon-kiosk2-photo-booth`. This branch is deployed to Vercel project `rpb-legacycon-kiosk2`; the original `legacycon-2026` branch and kiosk remain unchanged. Both sites currently share the same Vercel Blob store.

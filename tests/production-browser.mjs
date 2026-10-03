@@ -1,6 +1,6 @@
 import {chromium} from 'playwright';import {mkdir,readFile,writeFile} from 'node:fs/promises';import assert from 'node:assert/strict';
 const base=process.env.KIOSK_URL||'https://rpb-legacycon-kiosk2.vercel.app';await mkdir('artifacts',{recursive:true});
-const health=await (await fetch(base+'/api/health')).json();assert.equal(health.flow,'blueprint-caricature-card-qr-v1');assert.equal(health.quality,'medium');
+const health=await (await fetch(base+'/api/health')).json();assert.equal(health.flow,'blueprint-expanded-backdrop-card-qr-v1');assert.equal(health.quality,'medium');
 const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});const result={publicURL:base,flow:health.flow};
 try{const page=await browser.newPage({viewport:{width:390,height:844}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(base);await page.waitForFunction(()=>document.getElementById('face').dataset.avatar==='ready');await page.screenshot({path:'artifacts/production-mobile.png',fullPage:true});

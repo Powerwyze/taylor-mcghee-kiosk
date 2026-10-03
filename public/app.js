@@ -6,25 +6,17 @@ import {BlueprintVoice} from './blueprint-voice.js';
 import {CameraSentry} from './host-sentry.js';
 const $=id=>document.getElementById(id);
 let stopGame=null;
-const formats=[['caricature','Create my caricature']];
-const roles=[
- ['entrepreneur','Founder Spark','Warm, confident business energy'],
- ['tech','Tech Trailblazer','Smart, modern and playful'],
- ['vc','Deal Maker','Polished with a touch of flair'],
- ['law','Legal Leader','Professional and approachable'],
- ['bluecollar','Master Maker','Proud and down to earth'],
- ['executive','Executive Energy','Bold, upbeat leadership'],
- ['community','Community Connector','Welcoming and vibrant']
-];
+const formats=[['expanded','Expand my photo']];
+const roles=[];
 let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
 let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',generationErrorCode='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
 const idle=new GuestIdle({onIdle:()=>reset(false)});
 function protectedWork(){return captureBusy||generating||claimBusy||!!cardController;}
 function refreshIdle(){idle.setBusy(protectedWork());}
-function snapshot(){return {screen,format,category:role,soloCaricature:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
+function snapshot(){return {screen,format,expandedBackdrop:true,photoBooth:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
 function notify(speak=false){voice.note('Authoritative app state: '+JSON.stringify(snapshot()),speak);}
 function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen=name;$('kiosk').dataset.screen=name;$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
- ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','intro','card'].includes(name)?0:['category','camera'].includes(name)?1:2)));
+ ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','intro','card'].includes(name)?0:['camera'].includes(name)?1:2)));
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
 const voice=new BlueprintVoice({
@@ -40,7 +32,7 @@ const voice=new BlueprintVoice({
   if(name==='skip_card'&&['intro','card'].includes(screen)){skipCard();return snapshot();}
   if(name==='open_card_camera'&&screen==='intro'){openCard();return {accepted:true};}
   if(name==='choose_category'&&screen==='category'&&roles.some(r=>r[0]===args.category)){chooseRole(args.category);return {accepted:true};}
-  if(name==='take_caricature'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takeCaricature();return {accepted:true};}
+  if(name==='take_photo'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takePhoto();return {accepted:true};}
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
  }
 });
@@ -78,7 +70,7 @@ async function openCard(){
  try{await camera($('cardVideo'));if(epoch!==version||screen!=='card')return;$('readCard').disabled=false;$('cardStatus').textContent='The card image is read once and is not saved.';}
  catch(e){if(epoch===version&&e.name!=='AbortError')$('cardStatus').textContent=cameraErrorMessage(e);}
 }
-function skipCard(){if(!format||!['intro','card'].includes(screen))return;cardController?.abort();cardController=null;stopCamera();sentry.consume();refreshIdle();show('category');}
+function skipCard(){if(!format||!['intro','card'].includes(screen))return;cardController?.abort();cardController=null;stopCamera();sentry.consume();refreshIdle();openPhoto();}
 async function readCard(){
  if(cardController||!cameraStream)return;const epoch=version;const op=new AbortController();cardController=op;$('readCard').disabled=true;$('cardStatus').textContent='Reading the printed details…';refreshIdle();
  try{
@@ -88,18 +80,16 @@ async function readCard(){
   if(epoch!==version||op.signal.aborted||screen!=='card')return;
   $('nameInput').value=d.name||'';$('companyInput').value=d.company||'';$('emailInput').value=d.email||'';$('phoneInput').value=d.phone||'';
   $('cardSummary').textContent='Card scanned.';
-  stopCamera();show('category');
+  stopCamera();openPhoto();
  }catch(e){if(epoch===version&&!op.signal.aborted)$('cardStatus').textContent=e.message;}
  finally{if(cardController===op){cardController=null;$('readCard').disabled=false;refreshIdle();}}
 }
-for(const [id,label,line] of roles){const b=document.createElement('button');b.className='role-card';b.dataset.role=id;const title=document.createElement('strong'),desc=document.createElement('span');title.textContent=label;desc.textContent=line;b.append(title);b.onclick=()=>chooseRole(id);$('roleGrid').append(b);}
-async function chooseRole(id){if(!['category','camera','review','errorScreen'].includes(screen)||protectedWork())return;role=id;await openPhoto();}
 async function openPhoto(){
- const epoch=version;generationError='';generationErrorCode='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR CARICATURE';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
+ const epoch=version;generationError='';generationErrorCode='';show('camera');$('selectedRole').textContent='YOUR BACKDROP PHOTO';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
  try{await camera($('photoVideo'));if(epoch!==version||screen!=='camera')return;$('takePhoto').disabled=false;$('cameraStatus').textContent='5-second countdown after you tap.';notify();}
  catch(e){if(epoch===version&&e.name!=='AbortError'){$('cameraStatus').textContent=cameraErrorMessage(e);$('takePhoto').disabled=false;$('takePhoto').textContent='Retry camera';}}
 }
-async function takeCaricature(){
+async function takePhoto(){
  if(screen!=='camera'||captureBusy||generating)return;
  if(!cameraStream){$('takePhoto').textContent='Take photo';return openPhoto();}
  const epoch=version,cam=cameraController;captureBusy=true;$('takePhoto').disabled=true;refreshIdle();voice.quiet(true);notify();
@@ -108,7 +98,7 @@ async function takeCaricature(){
   const b=await freeze($('photoVideo'));
   if(epoch!==version||cam.signal.aborted)return;
   if(sourceUrl)URL.revokeObjectURL(sourceUrl);source=b;sourceUrl=URL.createObjectURL(b);stopCamera();
-  contactConfirmed=false;result=null;contact=null;$('optionalDetails').open=['nameInput','companyInput','emailInput'].some(id=>$(id).value.trim());show('contact');$('generationStatus').textContent='Your caricature is generating.';
+  contactConfirmed=false;result=null;contact=null;$('optionalDetails').open=['nameInput','companyInput','emailInput'].some(id=>$(id).value.trim());show('contact');$('generationStatus').textContent='Expanding your backdrop.';
   generate(); // Deliberately independent of contact entry.
  }catch(e){if(epoch===version&&!cam.signal.aborted)$('cameraStatus').textContent='Capture did not finish. Tap Take photo to try again.';}
  finally{if(epoch===version){captureBusy=false;$('countdown').hidden=true;$('takePhoto').disabled=false;voice.quiet(false);refreshIdle();}}
@@ -116,18 +106,18 @@ async function takeCaricature(){
 async function generate(){
  if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';generationErrorCode='';refreshIdle();notify();
  try{
-  const form=new FormData();form.append('image',source,'caricature-source.jpg');form.append('role',role);form.append('format',format);
-  const r=await fetch('/api/caricature',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(235000)])});
+  const form=new FormData();form.append('image',source,'photo-booth-source.jpg');form.append('format',format);
+  const r=await fetch('/api/expanded-photo',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(235000)])});
   if(!r.ok){const d=await r.json().catch(()=>({}));throw Object.assign(Error(d.error||'The image did not finish.'),{code:d.code});}
-  const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No caricature returned.');
+  const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No expanded photo returned.');
   const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
-  if(!id||!claim)throw Error('The caricature link was incomplete.');
+  if(!id||!claim)throw Error('The photo link was incomplete.');
   if(epoch!==version)return;const url=URL.createObjectURL(blob);const image=new Image();image.src=url;
   try{await image.decode();}catch(e){URL.revokeObjectURL(url);throw e;}
   if(epoch!==version){URL.revokeObjectURL(url);return;}
   if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=url;
-  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your caricature.')};
-  $('generationStatus').textContent='Caricature ready. Confirm to continue.';
+  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your wider photo.')};
+  $('generationStatus').textContent='Wider photo ready. Confirm to continue.';
  }catch(e){if(epoch===version&&!controller.signal.aborted){generationErrorCode=e.code||'';generationError=e.message||'The image timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
  finally{if(epoch===version){generating=false;refreshIdle();if(contactConfirmed)advance();notify();}}
 }
@@ -150,7 +140,7 @@ async function approve(){
   const r=await fetch('/api/claim-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...contact,id:result.id,claim:result.claim,confirmed:true,likenessApproved:true}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});const d=await r.json();
   if(!r.ok||!d.ok)throw Error(d.error||'Please try confirming again.');
   if(epoch!==version)return;const link=location.origin+'/p/'+result.id;
-  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then briefly remind them to post their caricature and tag RPB Law Firm and PowerWyze. Thank them. No SMS was sent.',true);
+  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then briefly remind them to post their photo and tag RPB Law Firm and PowerWyze. Thank them. No SMS was sent.',true);
  }catch(e){if(epoch===version)$('claimError').textContent=e.message;}
  finally{if(epoch===version){claimBusy=false;$('approvePhoto').disabled=false;refreshIdle();}}
 }
@@ -162,8 +152,8 @@ function toggleKeyboard(){const open=$('keyboard').hidden;$('keyboard').hidden=!
 let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-','SPACE SHIFT LEFT RIGHT DELETE']){const el=document.createElement('div');el.className='key-row';for(const key of row.includes(' ')?row.split(' '):[...row]){const b=document.createElement('button');b.type='button';b.textContent=key;b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{const t=keyboardInput;let start=t.selectionStart??t.value.length,end=t.selectionEnd??start;if(key==='SHIFT'){shift=!shift;b.setAttribute('aria-pressed',shift);return;}if(key==='LEFT'||key==='RIGHT'){const p=Math.max(0,Math.min(t.value.length,start+(key==='LEFT'?-1:1)));t.setSelectionRange(p,p);}else{if(key==='DELETE'&&start===end)start=Math.max(0,start-1);const s=key==='DELETE'?'':key==='SPACE'?' ':shift?key.toUpperCase():key;if(t.value.length-end+start+s.length<=t.maxLength)t.setRangeText(s,start,end,'end');t.dispatchEvent(new Event('input'));}t.focus({preventScroll:true});};el.append(b);}$('keyboard').append(el);}
 $('keyboardToggle').onclick=toggleKeyboard;
 $('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
-$('categoryBack').onclick=()=>show('intro');$('takePhoto').onclick=takeCaricature;
-$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('category');};
+$('takePhoto').onclick=takePhoto;
+$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();openPhoto();};
 $('regeneratePhoto').onclick=()=>{if(protectedWork()||!source||attempts>=3||screen!=='review')return;result=null;generationError='';generationErrorCode='';show('wait');buildGame();generate();};
 $('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
 $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;

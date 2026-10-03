@@ -72,7 +72,7 @@
       "maxDuration": 60,
       "includeFiles": "{lib/logos/**,public/assets/logos/**}"
     },
-    "api/caricature.js": {
+    "api/expanded-photo.js": {
       "maxDuration": 240,
       "includeFiles": "{lib/logos/**,public/assets/logos/**}"
     }

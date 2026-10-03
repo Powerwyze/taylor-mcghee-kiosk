@@ -14,7 +14,7 @@ export class BlueprintVoice{
  }
  async start(greeting=''){
   if(this.active)return;this.active=true;const epoch=++this.epoch;this.caption='';this.request=new AbortController();this.onStatus('Connecting voice… You can keep using the buttons.',false);
-  this.timer=setTimeout(()=>{if(epoch===this.epoch)this.stop('Voice timed out. Your caricature and details are preserved. Tap retry voice or use buttons.');},35000);
+  this.timer=setTimeout(()=>{if(epoch===this.epoch)this.stop('Voice timed out. Your photo and details are preserved. Tap retry voice or use buttons.');},35000);
   try{
    await this.prepareAudio();const mic=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}});
    if(epoch!==this.epoch){mic.getTracks().forEach(t=>t.stop());return;}this.mic=mic;const peer=new RTCPeerConnection();this.peer=peer;
