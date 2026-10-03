@@ -149,3 +149,5 @@ body.home-screen{background:#50181e}
 .shell[data-screen="home"] #countdown{z-index:3;pointer-events:none}
 .shell[data-screen="home"] .home-camera-hint{order:2;margin:0 0 4px;font-size:13px;line-height:1.25;color:#fff1d8;text-shadow:0 2px 5px #24070e}
 @media(max-width:700px){.shell[data-screen="home"] #photoFrame{border-radius:10px}.shell[data-screen="home"] #takePhoto{width:min(66%,220px);min-height:50px!important;font-size:15px!important}.shell[data-screen="home"] .home-camera-hint{font-size:11px}}
+
+#peaceStatus{position:absolute;z-index:2;top:8px;left:8px;right:8px;margin:0;padding:7px 10px;border-radius:7px;background:#170e18c9;color:#fff5e5;text-align:center;font-size:clamp(11px,1.3vw,16px);line-height:1.3;pointer-events:none}
