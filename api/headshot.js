@@ -19,7 +19,7 @@ module.exports=async(req,res)=>{
   mark('format');stage='review';const review=await checkLikeness(source,formatted,type);
   mark('review');const passed=review.appearance==='consistent'&&review.composition==='pass';
   const path=passed?'ai-checked':'ai-review';
-  const notice=passed?'AI image ready. Check your face before saving.':review.appearance==='consistent'?'AI image ready. Check the framing before saving.':'AI preview: check your face carefully. Try another version if it does not look like you.';
+  const notice=review.issues?.includes('clothing')?'The AI may have changed your clothing. Check your outfit and try another version if needed.':passed?'AI image ready. Check your face before saving.':review.appearance==='consistent'?'AI image ready. Check the framing before saving.':'AI preview: check your face carefully. Try another version if it does not look like you.';
   // Review findings are advice, never a silent replacement with the camera photo.
   console.info('image_review',JSON.stringify({format:type,model:imageModel(),appearance:review.appearance,composition:review.composition,issues:review.issues}));
   stage='branding';const final=await brandPortrait(formatted,type);
