@@ -135,7 +135,7 @@ function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]=
 function advance(){
  if(!contactConfirmed)return;
  if(result){$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;$('regeneratePhoto').disabled=attempts>=3;show('review');gameVersion++;return;}
- if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').hidden=generationErrorCode==='RETAKE';$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
+ if(generationError){$('errorMessage').textContent=generationError;$('errorHeading').textContent=generationErrorCode==='RETAKE'?'Adjust your framing.':['CREDITS_REQUIRED','SERVICE_SETUP'].includes(generationErrorCode)?'Ask the booth team.':'Photo not ready.';$('retryPhoto').hidden=['RETAKE','CREDITS_REQUIRED','SERVICE_SETUP'].includes(generationErrorCode);$('errorRetake').hidden=['CREDITS_REQUIRED','SERVICE_SETUP'].includes(generationErrorCode);$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
  show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, use your researched RPB Law Firm and BPN LegacyCon context: ask one brief optional question about their goals, then listen and tailor a short relevant fact to their answer. Do not recite private details.',true);
 }
 $('contactForm').onsubmit=e=>{
