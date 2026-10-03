@@ -42,7 +42,7 @@ module.exports = async function handler(req, res) {
     email: emailReady(),
     storage: storageKind(),
     model: require("../lib/headshot").imageModel(),
-    quality: "high",
+    quality: "medium",
     inputFidelity: "high",
     size: "1024x1536",
     fromName: process.env.FROM_NAME || "RPB Law Firm",
