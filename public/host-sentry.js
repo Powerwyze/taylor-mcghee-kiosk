@@ -48,22 +48,12 @@ export class CameraSentry{
   },350);}
   async greet(epoch){
     if(this.pending||!this.canGreet())return;
-    this.pending=true;this.onStatus('greeting');this.controller=new AbortController();
+    this.pending=true;this.onStatus('greeting');
     try{
-      // Snapshot the current camera frame now, not the earlier detector frame.
-      const canvas=document.createElement('canvas');canvas.width=640;canvas.height=Math.round(640*this.video.videoHeight/this.video.videoWidth);
-      canvas.getContext('2d').drawImage(this.video,0,0,canvas.width,canvas.height);
-      let frame=canvas.toDataURL('image/jpeg',.72);canvas.width=canvas.height=0;
-      const response=await fetch('/api/host-greeting',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({frame}),signal:AbortSignal.any([this.controller.signal,AbortSignal.timeout(12000)])});
-      frame=null;
-      const result=await response.json();
-      if(!response.ok)throw new Error('Greeting could not connect.');
       if(epoch!==this.epoch||!this.enabled||!this.canGreet()||!this.gate.isFresh(performance.now()))return;
-      if(result.personPresent&&typeof result.greeting==='string')await this.onVisitor(result.greeting);
-    }catch(error){
-      if(epoch===this.epoch&&error.name!=='AbortError')this.onStatus('watching','Greeting unavailable. Tap Blueprint to start.');
+      await this.onVisitor('Hey, looking sharp! Would you like a picture?');
     }finally{
-      if(epoch===this.epoch){this.pending=false;this.controller=null;if(this.enabled)this.onStatus('watching');}
+      if(epoch===this.epoch){this.pending=false;if(this.enabled)this.onStatus('watching');}
     }
   }
   consume(){this.controller?.abort();this.gate.consume(performance.now());}

@@ -23,8 +23,8 @@ export class BlueprintVoice{
    this.tools=new LiveTools({send:e=>{if(epoch===this.epoch)this.send(e);},execute:(n,a)=>epoch===this.epoch?this.execute(n,a):{error:'Expired session'}});
    channel.onmessage=({data})=>{if(epoch!==this.epoch)return;let e;try{e=JSON.parse(data);}catch{return;}
     if(e.type==='session.started'){clearTimeout(this.timer);this.ready=true;this.onStatus('Blueprint is listening. Buttons remain available.',true);
-     const id=crypto.randomUUID();this.greetingId=id;this.send({type:'session.instructions.append',event_id:id,delegation_id:null,content:'Current booth state: '+JSON.stringify(this.getState())+'. '+(greeting?'A recent camera frame supplied this brief welcome: '+JSON.stringify(greeting):'The guest tapped Talk with Blueprint.')+' Greet briefly in English, then follow the current step. Never restart their existing work.'});
-    }else if(e.type==='session.instructions.appended'&&e.client_event_id===this.greetingId){this.greetingId=null;this.note('Welcome the guest now and follow the current app state. Listen after one short question.',true);}
+     const id=crypto.randomUUID();this.greetingId=id;this.send({type:'session.instructions.append',event_id:id,delegation_id:null,content:'Current booth state: '+JSON.stringify(this.getState())+'. '+(greeting?'Use this one-line opening once: '+JSON.stringify(greeting):'Open with exactly: Hey, would you like a picture?')+' Then listen for the guest. Never restart their existing work.'});
+    }else if(e.type==='session.instructions.appended'&&e.client_event_id===this.greetingId){this.greetingId=null;this.note('Say the single opening question now, then stop and listen.',true);}
     else if(e.type==='session.input_transcript.delta'){if(e.delta?.trim()){this.onActivity();this.caption='';this.onCaption('');}}
     else if(e.type==='session.output_transcript.delta'){if(!this.muted&&typeof e.delta==='string'){this.caption=(this.caption+e.delta).slice(-340);this.onCaption(this.caption);}}
     else if(e.type==='session.closed')this.stop('Voice ended. Continue with buttons or retry voice.');
