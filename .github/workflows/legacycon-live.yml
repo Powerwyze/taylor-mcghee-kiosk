@@ -1,27 +1,17 @@
-name: LegacyCon live verification
+name: LegacyCon kiosk2 live voice check
 on:
-  push:
-    branches: [legacycon-2026]
-    paths: ['.github/workflows/legacycon-live.yml']
   workflow_dispatch:
 jobs:
-  live:
+  voice:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
-      - run: npm install --no-save playwright@1.56.1
+      - run: npm ci --ignore-scripts
+      - run: npm install --no-save --package-lock=false playwright@1.56.1
       - run: npx playwright install --with-deps chromium
-      - run: node tests/live-headshot.mjs
-        env:
-          KIOSK_URL: https://rpb-legacycon-kiosk-1l066dm2t-powerwyzes-projects.vercel.app
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: legacycon-live
-          path: artifacts/
+      - run: node tests/kiosk2-voice-smoke.mjs
