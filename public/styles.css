@@ -28,3 +28,10 @@ details[open]>summary{margin-bottom:8px}.booth-options{margin:0;max-width:440px}
  .screen h1{font-size:38px;margin-bottom:20px}.role-card{min-height:64px}
  footer{gap:4px;padding-top:14px}.booth-options{align-self:flex-start}
 }
+
+.format-grid{display:grid;gap:12px}.format-choice{text-align:center}
+.shell[data-format="banner"] .comparison{grid-template-columns:1fr}
+.shell[data-format="banner"] #reviewImage,.shell[data-format="banner"] #resultImage{width:100%;height:auto;aspect-ratio:4/1;object-fit:contain}
+.shell[data-format="banner"] #sourceImage{height:180px}
+.shell[data-format="banner"] .takeaway{grid-template-columns:1fr}
+.shell[data-format="profile"] #reviewImage,.shell[data-format="profile"] #resultImage{aspect-ratio:1/1;object-fit:contain}

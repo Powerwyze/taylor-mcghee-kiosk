@@ -4,6 +4,7 @@ import {GuestIdle} from './vendor/host-idle.js';
 import {BlueprintVoice} from './blueprint-voice.js';
 import {CameraSentry} from './host-sentry.js';
 const $=id=>document.getElementById(id);
+const formats=[['banner','LinkedIn banner'],['profile','Profile picture'],['headshot','Headshot']];
 const roles=[
  ['entrepreneur','Entrepreneur','Warm, approachable founder'],
  ['tech','Tech enthusiast','Clean, modern studio'],
@@ -14,14 +15,14 @@ const roles=[
  ['community','Community leader','Warm, welcoming presence']
 ];
 let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
-let screen='home',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
+let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
 const idle=new GuestIdle({onIdle:()=>reset(false)});
 function protectedWork(){return captureBusy||generating||claimBusy||!!cardController;}
 function refreshIdle(){idle.setBusy(protectedWork());}
-function snapshot(){return {screen,category:role,soloHeadshot:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
+function snapshot(){return {screen,format,category:role,soloHeadshot:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
 function notify(speak=false){voice.note('Authoritative app state: '+JSON.stringify(snapshot()),speak);}
-function show(name){screen=name;$('kiosk').dataset.screen=name;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
- ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','card'].includes(name)?0:['category','camera'].includes(name)?1:2)));
+function show(name){screen=name;$('kiosk').dataset.screen=name;$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
+ ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','intro','card'].includes(name)?0:['category','camera'].includes(name)?1:2)));
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
 const voice=new BlueprintVoice({
@@ -33,8 +34,9 @@ const voice=new BlueprintVoice({
  execute:async(name,args)=>{
   if(name==='get_booth_status')return snapshot();
   if(name==='end_visit'&&args.confirmed===true){reset(false);return {ended:true};}
-  if(name==='skip_card'&&['home','card'].includes(screen)){skipCard();return snapshot();}
-  if(name==='open_card_camera'&&screen==='home'){openCard();return {accepted:true};}
+  if(name==='choose_format'&&screen==='home'&&formats.some(f=>f[0]===args.format)){chooseFormat(args.format);return snapshot();}
+  if(name==='skip_card'&&['intro','card'].includes(screen)){skipCard();return snapshot();}
+  if(name==='open_card_camera'&&screen==='intro'){openCard();return {accepted:true};}
   if(name==='choose_category'&&screen==='category'&&roles.some(r=>r[0]===args.category)){chooseRole(args.category);return {accepted:true};}
   if(name==='take_headshot'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takeHeadshot();return {accepted:true};}
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
@@ -47,7 +49,7 @@ function reset(manual=true){
  stopCamera();voice.stop();if(manual){sentry.disable();sentryEnabledByOperator=false;}else if(sentry.enabled)sentry.finish({immediate:true});
  generating=false;claimBusy=false;captureBusy=false;attempts=0;gameVersion++;
  for(const url of [sourceUrl,resultUrl])if(url)URL.revokeObjectURL(url);
- source=null;result=null;sourceUrl='';resultUrl='';role='';contactConfirmed=false;contact=null;generationError='';
+ source=null;result=null;sourceUrl='';resultUrl='';format='';role='';contactConfirmed=false;contact=null;generationError='';
  for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).value='';
  for(const id of ['sourceImage','reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
  $('optionalDetails').open=false;$('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='';$('countdown').hidden=true;
@@ -66,12 +68,15 @@ async function freeze(video){
  c.getContext('2d').drawImage(video,0,0,c.width,c.height);
  return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('Camera frame could not be saved.')),'image/jpeg',.96));
 }
+function chooseFormat(id){if(screen!=='home'||!formats.some(f=>f[0]===id)||protectedWork())return;format=id;sentry.consume();show('intro');}
+for(const [id,label] of formats){const b=document.createElement('button');b.className='outline format-choice';b.dataset.format=id;b.textContent=label;b.onclick=()=>chooseFormat(id);$('formatGrid').append(b);}
+$('changeFormat').onclick=()=>{stopCamera();format='';show('home');};
 async function openCard(){
- if(!['home','card'].includes(screen))return;sentry.consume();show('card');$('readCard').disabled=true;$('cardStatus').textContent='Starting camera…';const epoch=version;
+ if(!format||!['intro','card'].includes(screen))return;sentry.consume();show('card');$('readCard').disabled=true;$('cardStatus').textContent='Starting camera…';const epoch=version;
  try{await camera($('cardVideo'));if(epoch!==version||screen!=='card')return;$('readCard').disabled=false;$('cardStatus').textContent='The card image is read once and is not saved.';}
  catch(e){if(epoch===version&&e.name!=='AbortError')$('cardStatus').textContent=cameraErrorMessage(e);}
 }
-function skipCard(){cardController?.abort();cardController=null;stopCamera();sentry.consume();refreshIdle();show('category');}
+function skipCard(){if(!format||!['intro','card'].includes(screen))return;cardController?.abort();cardController=null;stopCamera();sentry.consume();refreshIdle();show('category');}
 async function readCard(){
  if(cardController||!cameraStream)return;const epoch=version;const op=new AbortController();cardController=op;$('readCard').disabled=true;$('cardStatus').textContent='Reading the printed details…';refreshIdle();
  try{
@@ -109,9 +114,9 @@ async function takeHeadshot(){
 async function generate(){
  if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';refreshIdle();notify();
  try{
-  const form=new FormData();form.append('image',source,'headshot-source.jpg');form.append('role',role);
+  const form=new FormData();form.append('image',source,'headshot-source.jpg');form.append('role',role);form.append('format',format);
   const r=await fetch('/api/headshot',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(175000)])});
-  if(!r.ok){const d=await r.json().catch(()=>({}));throw Object.assign(Error(d.error||'The headshot did not finish.'),{code:d.code});}
+  if(!r.ok){const d=await r.json().catch(()=>({}));throw Object.assign(Error(d.error||'The image did not finish.'),{code:d.code});}
   const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No photo returned.');
   const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
   if(!id||!claim)throw Error('The photo link was incomplete.');
@@ -119,9 +124,9 @@ async function generate(){
   try{await image.decode();}catch(e){URL.revokeObjectURL(url);throw e;}
   if(epoch!==version){URL.revokeObjectURL(url);return;}
   if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=url;
-  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your headshot.')};
+  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your image.')};
   $('generationStatus').textContent='Photo ready. Confirm to continue.';
- }catch(e){if(epoch===version&&!controller.signal.aborted){generationError=e.message||'The headshot timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
+ }catch(e){if(epoch===version&&!controller.signal.aborted){generationError=e.message||'The image timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
  finally{if(epoch===version){generating=false;refreshIdle();if(contactConfirmed)advance();notify();}}
 }
 function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]==='1')n=n.slice(1);return /^[2-9]\d{2}[2-9]\d{6}$/.test(n)?n:'';}
@@ -162,7 +167,7 @@ function toggleKeyboard(){const open=$('keyboard').hidden;$('keyboard').hidden=!
 let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-','SPACE SHIFT LEFT RIGHT DELETE']){const el=document.createElement('div');el.className='key-row';for(const key of row.includes(' ')?row.split(' '):[...row]){const b=document.createElement('button');b.type='button';b.textContent=key;b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{const t=keyboardInput;let start=t.selectionStart??t.value.length,end=t.selectionEnd??start;if(key==='SHIFT'){shift=!shift;b.setAttribute('aria-pressed',shift);return;}if(key==='LEFT'||key==='RIGHT'){const p=Math.max(0,Math.min(t.value.length,start+(key==='LEFT'?-1:1)));t.setSelectionRange(p,p);}else{if(key==='DELETE'&&start===end)start=Math.max(0,start-1);const s=key==='DELETE'?'':key==='SPACE'?' ':shift?key.toUpperCase():key;if(t.value.length-end+start+s.length<=t.maxLength)t.setRangeText(s,start,end,'end');t.dispatchEvent(new Event('input'));}t.focus({preventScroll:true});};el.append(b);}$('keyboard').append(el);}
 $('keyboardToggle').onclick=toggleKeyboard;
 $('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
-$('categoryBack').onclick=()=>show('home');$('takePhoto').onclick=takeHeadshot;
+$('categoryBack').onclick=()=>show('intro');$('takePhoto').onclick=takeHeadshot;
 $('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('category');};
 $('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
 $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;

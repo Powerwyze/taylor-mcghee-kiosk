@@ -13,6 +13,7 @@ try{
   await page.waitForFunction(()=>window.liveEvents.some(e=>e.type==='session.output_transcript.delta'),null,{timeout:35000});report.spokenCaptions=true;
   await page.waitForFunction(async()=>{const stats=await window.livePeer.getStats();return [...stats.values()].some(s=>s.type==='inbound-rtp'&&s.kind==='audio'&&s.bytesReceived>0)&&!document.getElementById('voiceAudio').paused;},null,{timeout:15000});report.incomingAudio=true;
   const ask=text=>page.evaluate(text=>{window.liveChannel.send(JSON.stringify({type:'response.item.create',item:{type:'message',role:'user',content:[{type:'input_text',text}]}}));window.liveChannel.send(JSON.stringify({type:'response.create'}));},text);
+  await ask('I would like a LinkedIn banner. Please select that image type.');await page.waitForFunction(()=>document.getElementById('kiosk').dataset.screen==='intro',null,{timeout:30000});report.voiceFormat=true;await page.waitForTimeout(2000);
   await ask('I do not have a business card. Please skip the card step.');
   await page.waitForFunction(()=>document.getElementById('kiosk').dataset.screen==='category',null,{timeout:30000});report.voiceSkipCard=true;
   await page.waitForTimeout(3000);
@@ -27,10 +28,10 @@ try{
  const cr=await fetch(base+'/api/read-card',{method:'POST',body:cf});report.cardStatus=cr.status;
  if(cr.ok){const d=await cr.json();report.cardOCR=d.name==='Alex Sample'&&d.phone.replace(/\D/g,'').endsWith('2025550123')&&d.email==='alex@example.com';}
  const source=await readFile('tests/fixtures/person.jpg');
- const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'public-test-portrait.jpg');form.append('role','executive');
+ const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'public-test-portrait.jpg');form.append('role','executive');form.append('format','banner');
  const r=await fetch(base+'/api/headshot',{method:'POST',body:form});report.headshotStatus=r.status;
  if(r.ok){
-  const image=Buffer.from(await r.arrayBuffer());await writeFile('artifacts/live-headshot.jpg',image);await writeFile('artifacts/source-fixture.jpg',source);
+  const image=Buffer.from(await r.arrayBuffer());const dimensions=await sharp(image).metadata();report.outputDimensions=[dimensions.width,dimensions.height];await writeFile('artifacts/live-headshot.jpg',image);await writeFile('artifacts/source-fixture.jpg',source);
   report.headshotPath=r.headers.get('X-RPB-Path');report.editStatus=r.headers.get('X-AI-Edit');report.checkStatus=r.headers.get('X-AI-Check');report.notice=decodeURIComponent(r.headers.get('X-Photo-Notice')||'');const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
   const post=(path,data)=>fetch(base+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
   const before=await post('/api/unlock',{id,phone:'2025550123'});report.unboundHidden=!before.ok;
@@ -41,5 +42,5 @@ try{
   report.qr=(await fetch(base+'/api/qr?text='+encodeURIComponent(base+'/p/'+id))).ok;
  }else report.headshotError=(await r.json().catch(()=>({}))).code||'unavailable';
  await writeFile('artifacts/live-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
- assert.equal(report.voiceStarted,true,'live voice startup');assert.equal(report.spokenCaptions,true);assert.equal(report.incomingAudio,true);assert.equal(report.voiceSkipCard,true);assert.equal(report.voiceCategory,true);assert.deepEqual(report.voiceErrors,[]);assert.equal(report.cardOCR,true);assert.equal(report.editStatus,'success','real image generation succeeded');assert.ok(['passed','rejected'].includes(report.checkStatus),'independent check completed');assert.equal(report.headshotPath,report.checkStatus==='passed'?'ai-checked':'original','rejected likeness must use original');assert.equal(report.unlockSuccess,true);assert.equal(report.wrongNumberHidden,true);assert.equal(report.likenessGate,true);assert.equal(report.unboundHidden,true);
+ assert.equal(report.voiceStarted,true,'live voice startup');assert.equal(report.spokenCaptions,true);assert.equal(report.incomingAudio,true);assert.equal(report.voiceFormat,true);assert.equal(report.voiceSkipCard,true);assert.deepEqual(report.outputDimensions,[1584,396]);assert.equal(report.voiceCategory,true);assert.deepEqual(report.voiceErrors,[]);assert.equal(report.cardOCR,true);assert.equal(report.editStatus,'success','real image generation succeeded');assert.ok(['passed','rejected'].includes(report.checkStatus),'independent check completed');assert.equal(report.headshotPath,report.checkStatus==='passed'?'ai-checked':'original','rejected likeness must use original');assert.equal(report.unlockSuccess,true);assert.equal(report.wrongNumberHidden,true);assert.equal(report.likenessGate,true);assert.equal(report.unboundHidden,true);
 }finally{await browser.close();}
