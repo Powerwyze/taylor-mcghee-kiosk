@@ -54,7 +54,7 @@ module.exports = async function handler(req, res) {
   <section id="unlocked" hidden>
     <img id="portrait" class="portrait" alt="Your Legacy Portrait">
     <a id="save" class="btn" href="#">Download / Save</a>
-    <p><strong>Post and tag @rpblawfirm for a chance to win a free strategy session.</strong></p>
+    <p><strong>Post your photo and tag <a style="color:inherit" href="https://www.linkedin.com/company/rpb-law/" target="_blank" rel="noopener noreferrer">RPB Law Firm</a> and <a style="color:inherit" href="https://www.linkedin.com/company/powerwyze/" target="_blank" rel="noopener noreferrer">PowerWyze</a>!</strong></p>
     <a class="btn" href="${ASSESSMENT_URL}">Take the RPB Business &amp; Brand Assessment</a>
   </section>
   <p class="legal">${escapeHtml(LEGAL_LINE)}</p>

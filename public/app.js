@@ -148,7 +148,7 @@ async function approve(){
   const r=await fetch('/api/claim-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...contact,id:result.id,claim:result.claim,confirmed:true,likenessApproved:true}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});const d=await r.json();
   if(!r.ok||!d.ok)throw Error(d.error||'Please try confirming again.');
   if(epoch!==version)return;const link=location.origin+'/p/'+result.id;
-  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then thank them. No SMS was sent.',true);
+  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then briefly remind them to post their photo and tag RPB Law Firm and PowerWyze. Thank them. No SMS was sent.',true);
  }catch(e){if(epoch===version)$('claimError').textContent=e.message;}
  finally{if(epoch===version){claimBusy=false;$('approvePhoto').disabled=false;refreshIdle();}}
 }

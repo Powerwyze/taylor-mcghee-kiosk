@@ -1,3 +1,4 @@
+const {brandPortrait}=require('../lib/portrait-branding');
 const crypto=require('node:crypto');const sharp=require('sharp');
 const {reply,sameOrigin,upload}=require('../lib/http');
 const {ROLES,FORMATS,imageModel,formatOutput,checkSource,checkLikeness,editHeadshot}=require('../lib/headshot');
@@ -14,13 +15,14 @@ module.exports=async(req,res)=>{
   stage='source-check';const sourceCheck=await checkSource(source);
   if(!sourceCheck?.usable){console.info('source_retake',JSON.stringify({issue:sourceCheck.issue}));return reply(res,422,{error:sourceCheck.reason||'Retake with your face clearly visible.',code:'RETAKE'});}
   stage='generation';const edited=await editHeadshot(source,role,type);
-  stage='format';const final=await formatOutput(edited,type);
-  stage='review';const review=await checkLikeness(source,final,type);
+  stage='format';const formatted=await formatOutput(edited,type);
+  stage='review';const review=await checkLikeness(source,formatted,type);
   const passed=review.appearance==='consistent'&&review.composition==='pass';
   const path=passed?'ai-checked':'ai-review';
   const notice=passed?'AI image ready. Check your face before saving.':review.appearance==='consistent'?'AI image ready. Check the framing before saving.':'AI preview: check your face carefully. Try another version if it does not look like you.';
   // Review findings are advice, never a silent replacement with the camera photo.
   console.info('image_review',JSON.stringify({format:type,model:imageModel(),appearance:review.appearance,composition:review.composition,issues:review.issues}));
+  stage='branding';const final=await brandPortrait(formatted,type);
   stage='storage';const id=photoId(),claim=crypto.randomBytes(32).toString('base64url');
   await savePhotoRecord({id,jpeg:final,phoneHash:'',look:type+':'+role,claimHash:hashToken(claim)});
   res.statusCode=200;res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','image/jpeg');
