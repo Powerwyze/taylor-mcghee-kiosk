@@ -1,0 +1,25 @@
+name: Verify event photo precheck
+on:
+  push:
+    branches: [legacycon-2026]
+    paths: [.github/workflows/source-check-live.yml]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node tests/source-check-live.mjs
+        env:
+          KIOSK_URL: https://rpb-legacycon-kiosk-bnbgpbdy5-powerwyzes-projects.vercel.app
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-check-live
+          path: artifacts/
