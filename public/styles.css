@@ -151,3 +151,9 @@ body.home-screen{background:#50181e}
 @media(max-width:700px){.shell[data-screen="home"] #photoFrame{border-radius:10px}.shell[data-screen="home"] #takePhoto{width:min(66%,220px);min-height:50px!important;font-size:15px!important}.shell[data-screen="home"] .home-camera-hint{font-size:11px}}
 
 #peaceStatus{position:absolute;z-index:2;top:8px;left:8px;right:8px;margin:0;padding:7px 10px;border-radius:7px;background:#170e18c9;color:#fff5e5;text-align:center;font-size:clamp(11px,1.3vw,16px);line-height:1.3;pointer-events:none}
+
+/* Put the short gesture instruction above the viewfinder, readable from a distance. */
+.shell[data-screen="home"] .home-camera-hint{order:0;width:100%;margin:0 0 12px;padding:14px 12px;border-radius:12px;background:#301016eb;color:#fff1d8;text-align:center;line-height:1.15;text-shadow:none}
+.shell[data-screen="home"] .home-camera-hint strong{display:block;font-size:clamp(28px,3.5vw,38px);font-weight:700}
+.shell[data-screen="home"] .home-camera-hint span{display:block;margin-top:8px;font-size:clamp(18px,2vw,23px);color:#f2cc8d}
+.shell[data-screen="camera"] #camera h1{font-family:inherit;font-weight:700}
