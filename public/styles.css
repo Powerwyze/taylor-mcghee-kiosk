@@ -141,3 +141,11 @@ body.home-screen{background:#50181e}
 .shell[data-screen="camera"] #cameraBack{width:min(100%,250px);min-height:44px!important;margin:0 auto;padding:8px 14px}
 @media(max-width:700px){.shell[data-screen="camera"] .masthead{padding:8px 14px}.shell[data-screen="camera"] .layout{padding:6px 12px 10px;gap:5px}.shell[data-screen="camera"] #camera h1{font-size:clamp(23px,6vw,30px)}.shell[data-screen="camera"] #camera>p:not(.eyebrow){font-size:12px}.shell[data-screen="camera"] #photoFrame{border-radius:12px}.shell[data-screen="camera"] #takePhoto{width:min(68%,230px);min-height:48px!important;font-size:15px!important}.shell[data-screen="camera"] .captions{min-height:0;max-height:40px;font-size:13px}}
 @media(max-height:700px){.shell[data-screen="camera"] #camera>.eyebrow,.shell[data-screen="camera"] #camera>p:not(.eyebrow):not(#cameraStatus){display:none}.shell[data-screen="camera"] .host-panel{max-height:72px;overflow:hidden}}
+
+/* Show the live, uncropped camera on the artwork home screen. */
+.shell[data-screen="home"] #home{display:flex;flex-direction:column;align-items:center;width:100%}
+.shell[data-screen="home"] #photoFrame{order:1;width:100%!important;max-width:560px;height:auto!important;margin:0 auto 6px;border:2px solid #e1b777;border-radius:16px;box-shadow:0 10px 34px #1b080cb3;background:#4c222d}
+.shell[data-screen="home"] #takePhoto{position:absolute;z-index:2;left:50%;top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(62%,250px);min-height:58px!important;margin:0;justify-content:center;box-shadow:0 5px 24px #18080bd9}
+.shell[data-screen="home"] #countdown{z-index:3;pointer-events:none}
+.shell[data-screen="home"] .home-camera-hint{order:2;margin:0 0 4px;font-size:13px;line-height:1.25;color:#fff1d8;text-shadow:0 2px 5px #24070e}
+@media(max-width:700px){.shell[data-screen="home"] #photoFrame{border-radius:10px}.shell[data-screen="home"] #takePhoto{width:min(66%,220px);min-height:50px!important;font-size:15px!important}.shell[data-screen="home"] .home-camera-hint{font-size:11px}}
