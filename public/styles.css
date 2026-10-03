@@ -52,3 +52,25 @@ body{background:#1c1016 url("/assets/legacycon-background.jpg") center / cover f
 .logo-cube{max-width:540px;margin:20px auto}.cube-view{height:340px;width:100%;touch-action:none;cursor:grab;background:#20131acc;border-radius:16px}.cube-view canvas{display:block;width:100%;height:100%}.cube-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.cube-controls button,.logo-cube select{min-height:48px;background:#3b2333;color:#f8f1e4;border:1px solid #d1a46f;border-radius:8px;padding:10px 14px;font:inherit}.logo-cube select{width:100%}.avatar[role=button]{cursor:pointer;-webkit-touch-callout:none;user-select:none}.avatar.sentry-hold{outline:3px solid var(--gold);outline-offset:4px;border-radius:18px}#avatarGestureStatus{grid-column:2}@media(max-width:700px){.cube-view{height:280px}}
 
 .cube-navigation{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;grid-template-rows:44px auto 44px;gap:6px;align-items:center}.cube-navigation .cube-view{grid-column:2;grid-row:2;cursor:grab}.cube-navigation>button{width:44px;height:44px;border:1px solid #d1a46f;border-radius:50%;background:#3b2333;color:#f8f1e4;font-size:27px}.cube-up{grid-column:2;grid-row:1;justify-self:center}.cube-left{grid-column:1;grid-row:2}.cube-right{grid-column:3;grid-row:2}.cube-down{grid-column:2;grid-row:3;justify-self:center}.cube-controls{justify-content:center}@media(max-width:700px){.cube-navigation .cube-view{height:270px}}
+
+/* Sculpted legal keepsakes, rendered in Blender at 640px; real 3D card flips. */
+.legal-memory{max-width:650px;margin:24px auto;padding:22px;border:1px solid #dfba7955;border-radius:24px;background:linear-gradient(145deg,#321b24e8,#100e16f2);box-shadow:0 24px 60px #0006}
+.memory-heading,.memory-footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.memory-heading h2{margin:0 0 16px}.memory-heading .small{margin:0 0 16px;color:#e5cba0}
+.memory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;perspective:1200px}
+.memory-card{padding:0;min-height:0;aspect-ratio:3/4;border:0;background:transparent;perspective:900px;border-radius:12px;touch-action:manipulation}
+.memory-turn{display:block;position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.2,.65,.2,1)}
+.memory-card[data-revealed=true] .memory-turn{transform:rotateY(180deg)}
+.memory-back,.memory-front{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid #e7be7b;border-radius:12px;overflow:hidden;box-shadow:0 6px 0 #604224,0 12px 18px #0007}
+.memory-back{background:repeating-linear-gradient(35deg,transparent 0 13px,#ddbc7e09 14px 15px),radial-gradient(ellipse at top,#754751,#321721 70%);padding:9px;gap:18px}
+.memory-back:before{content:'';position:absolute;inset:6px;border:1px solid #d6b16b55;border-radius:7px}
+.memory-back img{width:92%;height:auto;border-radius:3px;position:relative}
+.memory-back>span{font-size:9px;letter-spacing:.18em;color:#f4d7a2}
+.memory-front{transform:rotateY(180deg);background:radial-gradient(ellipse at 50% 35%,#fff8df,#cfb888);color:#37212a;justify-content:flex-end;padding-bottom:12px}
+.memory-front img{width:100%;height:auto;max-height:85%;object-fit:contain;filter:drop-shadow(0 6px 5px #50301c44)}
+.memory-front>span{font-size:12px;line-height:1.2;text-align:center;font-weight:700;padding:0 4px}
+.memory-card:disabled{opacity:1;cursor:default}.memory-card[data-matched=true] .memory-front{border:2px solid #96b68b;box-shadow:0 5px 0 #355239,0 0 16px #a7ca8b44}
+.memory-card:focus-visible{outline:3px solid #fff2b7;outline-offset:5px}
+.memory-footer{margin-top:18px}.memory-footer p{font-size:14px;margin:0}.memory-footer button{min-height:44px;padding:8px 14px;font-size:14px;background:transparent;color:#f6deb1;border:1px solid #caa770}
+@media(max-width:600px){.legal-memory{padding:12px;margin:18px auto}.memory-grid{gap:9px}.memory-heading h2{font-size:28px}.memory-heading .small{font-size:12px}.memory-back{padding:5px;gap:12px}.memory-back>span{font-size:6px;letter-spacing:.09em}.memory-front{padding-bottom:7px}.memory-front>span{font-size:9px}.memory-footer p{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.memory-turn{transition:none}}

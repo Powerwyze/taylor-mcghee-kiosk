@@ -1,4 +1,4 @@
-import {mountLogoCube} from './logo-cube.js';
+import {mountLegalMemory} from './legal-memory.js';
 import {startCameraPreview,cameraErrorMessage} from './vendor/camera-preview.js';
 import {runCountdown} from './vendor/host-countdown.js';
 import {GuestIdle} from './vendor/host-idle.js';
@@ -44,7 +44,7 @@ const voice=new BlueprintVoice({
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
  }
 });
-const sentry=new CameraSentry({video:$('sentryVideo'),canGreet:()=>screen==='home'&&!voice.active,onVisitor:async greeting=>{if(screen==='home'){await voice.start(greeting);idle.start(30000);refreshIdle();}},onStatus:(state,message)=>{$('sentryStatus').textContent=message||(state==='watching'?'Camera welcome is watching for a visitor.':state==='off'?'Camera welcome is off.':'Preparing camera welcome…');$('sentryButton').textContent=state==='off'?'Enable camera welcome':'Stop camera welcome';}});
+const sentry=new CameraSentry({video:$('sentryVideo'),canGreet:()=>screen==='home'&&!voice.active,onVisitor:async (greeting,isCurrent)=>{if(screen==='home'){await voice.start(greeting,()=>screen==='home'&&isCurrent());idle.start(30000);refreshIdle();}},onStatus:(state,message)=>{$('sentryStatus').textContent=message||(state==='watching'?'Camera welcome is watching for a visitor.':state==='off'?'Camera welcome is off.':'Preparing camera welcome…');$('sentryButton').textContent=state==='off'?'Enable camera welcome':'Stop camera welcome';}});
 function stopCamera(){cameraController?.abort();cameraController=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;for(const id of ['photoVideo','cardVideo'])$(id).srcObject=null;}
 function reset(manual=true){cancelAvatarHold();$('avatarGestureStatus').textContent='';
  version++;controller.abort();controller=new AbortController();cardController?.abort();cardController=null;
@@ -156,7 +156,7 @@ async function approve(){
 }
 function retake(){if(protectedWork())return;result=null;contactConfirmed=false;contact=null;attempts=0;if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl='';openPhoto();}
 function editContact(){if(claimBusy)return;contactConfirmed=false;show('contact');}
-function buildGame(){stopGame?.();stopGame=mountLogoCube($('logoCube'));}
+function buildGame(){stopGame?.();stopGame=mountLegalMemory($('legalMemory'));}
 for(const id of ['phoneInput','nameInput','companyInput','emailInput']){$(id).onfocus=()=>keyboardInput=$(id);$(id).oninput=()=>{contactConfirmed=false;idle.touch();};}
 function toggleKeyboard(){const open=$('keyboard').hidden;$('keyboard').hidden=!open;$('keyboardToggle').textContent=open?'Hide touch keyboard':'Show touch keyboard';for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).inputMode=open?'none':id==='phoneInput'?'tel':id==='emailInput'?'email':'text';}
 let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-','SPACE SHIFT LEFT RIGHT DELETE']){const el=document.createElement('div');el.className='key-row';for(const key of row.includes(' ')?row.split(' '):[...row]){const b=document.createElement('button');b.type='button';b.textContent=key;b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{const t=keyboardInput;let start=t.selectionStart??t.value.length,end=t.selectionEnd??start;if(key==='SHIFT'){shift=!shift;b.setAttribute('aria-pressed',shift);return;}if(key==='LEFT'||key==='RIGHT'){const p=Math.max(0,Math.min(t.value.length,start+(key==='LEFT'?-1:1)));t.setSelectionRange(p,p);}else{if(key==='DELETE'&&start===end)start=Math.max(0,start-1);const s=key==='DELETE'?'':key==='SPACE'?' ':shift?key.toUpperCase():key;if(t.value.length-end+start+s.length<=t.maxLength)t.setRangeText(s,start,end,'end');t.dispatchEvent(new Event('input'));}t.focus({preventScroll:true});};el.append(b);}$('keyboard').append(el);}
@@ -176,7 +176,7 @@ async function toggleSentry(){
  if(sentry.enabled){sentry.disable();sentryEnabledByOperator=false;$('avatarGestureStatus').textContent='Camera welcome off.';return;}
  if(screen!=='home'){$('avatarGestureStatus').textContent='Finish this visit or start over to enable camera welcome.';return;}
  const sentryEpoch=version;sentryToggleBusy=true;$('avatarGestureStatus').textContent='Enabling camera welcome…';
- try{await voice.prepareAudio();const m=await navigator.mediaDevices.getUserMedia({audio:true});m.getTracks().forEach(t=>t.stop());if(screen!=='home'||sentryEpoch!==version)return;sentryEnabledByOperator=true;await sentry.enable();$('avatarGestureStatus').textContent='Camera welcome on.';}
+ try{await voice.prepareAudio();const m=await navigator.mediaDevices.getUserMedia({audio:true});m.getTracks().forEach(t=>t.stop());if(screen!=='home'||sentryEpoch!==version)return;voice.stop('Preparing camera welcome.');sentryEnabledByOperator=true;await sentry.enable();sentryEnabledByOperator=sentry.enabled;$('avatarGestureStatus').textContent=sentry.enabled?'Camera welcome on.':'Camera welcome could not start. Use the photo buttons or retry.';}
  catch{sentryEnabledByOperator=false;$('avatarGestureStatus').textContent='Allow camera and microphone to enable camera welcome.';}
  finally{sentryToggleBusy=false;}
 }

@@ -6,7 +6,7 @@ export class CameraSentry{
   }
   async enable(){
     if(this.enabled)return;this.enabled=true;const epoch=++this.epoch;
-    this.gate.reset();this.onStatus('starting');
+    this.gate.reset();this.inference=false;this.onStatus('starting');
     try{
       const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1920},height:{ideal:1080}},audio:false});
       if(epoch!==this.epoch){stream.getTracks().forEach(t=>t.stop());return;}
@@ -30,11 +30,11 @@ export class CameraSentry{
       });
       if(epoch!==this.epoch)return;
       this.worker.onerror=()=>this.disable('Camera sentry paused. Tap Enable sentry to retry.');
-      this.onStatus('watching');this.schedule(epoch);
+      this.onStatus('watching');this.schedule(epoch,0);
       stream.getVideoTracks()[0].addEventListener('ended',()=>{if(epoch===this.epoch)this.disable('Camera disconnected. Tap Enable sentry after reconnecting.');});
     }catch(error){if(epoch===this.epoch)this.disable(error.name==='NotAllowedError'?'Allow camera access to enable sentry.':error.message);}
   }
-  schedule(epoch){this.timer=setTimeout(async()=>{
+  schedule(epoch,delay=350){this.timer=setTimeout(async()=>{
     if(epoch!==this.epoch||!this.enabled)return;
     try{
       if(!document.hidden&&!this.inference&&this.video.readyState>=2){
@@ -45,7 +45,7 @@ export class CameraSentry{
       }else if(this.inference&&performance.now()-this.lastFrameAt>6000)throw new Error('Person detection stopped responding.');
     }catch{this.disable('Camera sentry paused. Tap Enable sentry to retry.');return;}
     this.schedule(epoch);
-  },350);}
+  },delay);}
   async greet(epoch){
     if(this.pending||!this.canGreet())return;
     this.pending=true;this.onStatus('greeting');this.controller=new AbortController();
@@ -59,7 +59,7 @@ export class CameraSentry{
       const result=await response.json();
       if(!response.ok)throw new Error('Greeting could not connect.');
       if(epoch!==this.epoch||!this.enabled||!this.canGreet()||!this.gate.isFresh(performance.now()))return;
-      if(result.personPresent&&typeof result.greeting==='string')await this.onVisitor(result.greeting);
+      if(result.personPresent&&typeof result.greeting==='string')await this.onVisitor(result.greeting,()=>epoch===this.epoch&&this.enabled&&this.gate.isFresh(performance.now()));
     }catch(error){
       if(epoch===this.epoch&&error.name!=='AbortError')this.onStatus('watching','Greeting unavailable. Tap Blueprint to start.');
     }finally{

@@ -12,7 +12,7 @@ export class BlueprintVoice{
  stop(message='Voice paused. All touch controls still work.'){
   this.send({type:'session.close'});this.epoch++;this.active=false;this.ready=false;clearTimeout(this.timer);this.request?.abort();this.tools?.clear();this.channel?.close();this.peer?.close();this.mic?.getTracks().forEach(t=>t.stop());this.peer=null;this.channel=null;this.mic=null;this.audio.pause();this.audio.srcObject=null;this.sourceNode?.disconnect();this.sourceNode=null;this.analyser=null;this.caption='';this.onCaption('');this.onStatus(message,false);
  }
- async start(greeting=''){
+ async start(greeting='',isCurrent=()=>true){
   if(this.active)return;this.active=true;const epoch=++this.epoch;this.caption='';this.request=new AbortController();this.onStatus('Connecting voice… You can keep using the buttons.',false);
   this.timer=setTimeout(()=>{if(epoch===this.epoch)this.stop('Voice timed out. Your headshot and details are preserved. Tap retry voice or use buttons.');},35000);
   try{
@@ -22,8 +22,8 @@ export class BlueprintVoice{
    const channel=peer.createDataChannel('oai-events');this.channel=channel;
    this.tools=new LiveTools({send:e=>{if(epoch===this.epoch)this.send(e);},execute:(n,a)=>epoch===this.epoch?this.execute(n,a):{error:'Expired session'}});
    channel.onmessage=({data})=>{if(epoch!==this.epoch)return;let e;try{e=JSON.parse(data);}catch{return;}
-    if(e.type==='session.started'){clearTimeout(this.timer);this.ready=true;this.onStatus('Blueprint is listening. Buttons remain available.',true);
-     const id=crypto.randomUUID();this.greetingId=id;this.send({type:'session.instructions.append',event_id:id,delegation_id:null,content:'Current booth state: '+JSON.stringify(this.getState())+'. '+(greeting?'A recent camera frame supplied this brief welcome: '+JSON.stringify(greeting):'The guest tapped Talk with Blueprint.')+' Greet briefly in English, then follow the current step. Never restart their existing work.'});
+    if(e.type==='session.started'){if(!isCurrent()){this.stop('Camera welcome is watching for a visitor.');return;}clearTimeout(this.timer);this.ready=true;this.onStatus('Blueprint is listening. Buttons remain available.',true);
+     const id=crypto.randomUUID();this.greetingId=id;this.send({type:'session.instructions.append',event_id:id,delegation_id:null,content:'Current booth state: '+JSON.stringify(this.getState())+'. '+(greeting?'A recent camera frame supplied this brief welcome. Say this compliment/welcome FIRST, then ask the current photo-type question: '+JSON.stringify(greeting):'The guest tapped Talk with Blueprint.')+' Speak in English. Keep any supplied clothing compliment before the first question. Never invent a visual observation. Never restart their existing work.'});
     }else if(e.type==='session.instructions.appended'&&e.client_event_id===this.greetingId){this.greetingId=null;this.note('Welcome the guest now and follow the current app state. Listen after one short question.',true);}
     else if(e.type==='session.input_transcript.delta'){if(e.delta?.trim()){this.onActivity();this.caption='';this.onCaption('');}}
     else if(e.type==='session.output_transcript.delta'){if(!this.muted&&typeof e.delta==='string'){this.caption=(this.caption+e.delta).slice(-340);this.onCaption(this.caption);}}

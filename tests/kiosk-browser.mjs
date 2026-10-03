@@ -19,22 +19,25 @@ try{
  assert.equal(await page.locator('#phoneInput').inputValue(),'2025550123');await page.screenshot({path:'artifacts/portrait-contact.png',fullPage:true});
  await page.locator('#voiceButton').click();await page.waitForFunction(()=>document.getElementById('voiceStatus').textContent.includes('unavailable'),{},{timeout:35000});
  assert.equal(await page.locator('#phoneInput').inputValue(),'2025550123','voice failure preserves contact draft');
- await page.locator('#contactConfirm').click();await page.locator('#logoCube').waitFor({state:'visible'});assert.equal(claims,0);
- assert.equal(await page.locator('#cubeFace').count(),0);assert.equal(await page.locator('[data-view]').count(),4);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'false');
- for(let i=0;i<4;i++){await page.locator('[data-undo]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');}
- assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','inverse turns restore logo faces');
- const swipeCube=async(dx,dy)=>{const b=await page.locator('[data-cube-view]').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+dx,b.y+b.height/2+dy,{steps:5});await page.mouse.up();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');};
- await swipeCube(60,0);assert.equal(await page.locator('#logoCube').getAttribute('data-last-move'),'y:0:1');assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'false');
- await swipeCube(-60,0);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','opposite row swipes restore cube');
- await swipeCube(0,-60);assert.equal(await page.locator('#logoCube').getAttribute('data-last-move'),'x:0:-1');
- await swipeCube(0,60);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','opposite column swipes restore cube');
- const orientation=await page.locator('#logoCube').getAttribute('data-orientation');
- await page.locator('[data-view=right]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');assert.notEqual(await page.locator('#logoCube').getAttribute('data-orientation'),orientation);
- assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','view arrow does not turn puzzle layers');
- await swipeCube(60,0);await page.locator('[data-undo]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','swipe works after view change');
- await page.locator('[data-shuffle]').click();await page.screenshot({path:'artifacts/portrait-wait.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile-game.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.setViewportSize({width:1080,height:1920});
 
- release();await page.locator('#approvePhoto').waitFor({state:'visible'});assert.equal(claims,0,'QR not claimed before likeness approval');assert.equal(await page.locator('#logoCube').getAttribute('data-running'),'false','photo reveal stops game');
+ await page.locator('#contactConfirm').click();await page.locator('#legalMemory').waitFor({state:'visible'});assert.equal(claims,0);
+ assert.equal(await page.locator('.memory-card').count(),12);
+ const ids=await page.locator('.memory-card').evaluateAll(els=>els.map(e=>e.dataset.card));
+ const first=0,other=ids.findIndex(id=>id!==ids[0]);
+ await page.locator('.memory-card').nth(first).click();await page.locator('.memory-card').nth(other).click();
+ assert.equal(await page.locator('#legalMemory').getAttribute('data-locked'),'true');
+ const blocked=ids.findIndex((id,i)=>i!==first&&i!==other);await page.locator('.memory-card').nth(blocked).click();
+ assert.equal(await page.locator('.memory-card[data-revealed=true]').count(),2,'third tap blocked');
+ await page.waitForFunction(()=>document.getElementById('legalMemory').dataset.locked==='false');
+ assert.equal(await page.locator('.memory-card[data-revealed=true]').count(),0,'mismatch turns back');
+ for(const id of [...new Set(ids)].slice(0,3)){const pair=page.locator('.memory-card[data-card='+id+']');await pair.nth(0).click();await pair.nth(1).click();}
+ await page.waitForTimeout(550);
+ await page.screenshot({path:'artifacts/portrait-wait.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile-game.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.setViewportSize({width:1080,height:1920});
+ for(const id of [...new Set(ids)].slice(3)){const pair=page.locator('.memory-card[data-card='+id+']');await pair.nth(0).click();await pair.nth(1).click();}
+ assert.equal(await page.locator('#legalMemory').getAttribute('data-matches'),'6');assert.equal(await page.locator('.memory-card:disabled').count(),12);
+ await page.locator('[data-memory-reset]').click();assert.equal(await page.locator('#legalMemory').getAttribute('data-matches'),'0');assert.equal(await page.locator('.memory-card[data-revealed=true]').count(),0);
+
+ release();await page.locator('#approvePhoto').waitFor({state:'visible'});assert.equal(claims,0,'QR not claimed before likeness approval');assert.equal(await page.locator('#legalMemory').getAttribute('data-running'),'false','photo reveal stops game');
  assert.equal(await page.locator('#sourceImage').count(),0,'original photo is not displayed');await page.screenshot({path:'artifacts/portrait-review.png',fullPage:true});await page.locator('#approvePhoto').click();await page.locator('#qrImage').waitFor({state:'visible'});assert.equal(claims,1);
  await page.locator('#doneButton').click();assert.equal(await page.locator('#phoneInput').inputValue(),'');assert.equal(await page.locator('#nameInput').inputValue(),'');assert.equal(await page.locator('#resultImage').getAttribute('src'),null);
  await page.setViewportSize({width:390,height:844});await page.reload();await page.screenshot({path:'artifacts/mobile-home.png',fullPage:true});
