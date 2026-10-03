@@ -1,13 +1,13 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#35171e">
-<title>Your Next Look · RPB LegacyCon</title>
+<title>Your Big Head Caricature · RPB LegacyCon</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
 <script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
 </head><body>
 <video id="backgroundVideo" class="background-video" autoplay muted loop playsinline preload="auto" poster="/assets/legacycon-background.jpg" aria-hidden="true" tabindex="-1"><source src="/assets/legacycon-background.webm" type="video/webm"><source src="/assets/legacycon-background.mp4" type="video/mp4"></video>
 <div class="shell" id="kiosk" data-screen="home">
-<header class="masthead"><a class="brand" href="/" aria-label="RPB Law Firm headshots"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"></a><span>LEGACYCON <b>2026</b></span><button class="quiet" id="resetButton">Start over</button></header>
+<header class="masthead"><a class="brand" href="/" aria-label="RPB Law Firm caricatures"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"></a><span>LEGACYCON <b>2026</b></span><button class="quiet" id="resetButton">Start over</button></header>
 <div class="layout">
 <aside class="host-panel">
  <div id="hostCaptions" class="captions" role="status" aria-live="polite"></div>
@@ -17,11 +17,11 @@
 
 </aside>
 <main>
-<nav hidden class="steps" aria-label="Your image steps"><span id="step1">01 · Introduce</span><span id="step2">02 · Headshot</span><span id="step3">03 · Take it with you</span></nav>
-<section id="home" class="screen"><h1>What are<br><em>we making?</em></h1><div id="formatGrid" class="format-grid"></div></section>
+<nav hidden class="steps" aria-label="Your image steps"><span id="step1">01 · Introduce</span><span id="step2">02 · Caricature</span><span id="step3">03 · Take it with you</span></nav>
+<section id="home" class="screen"><h1>Ready for a<br><em>big head moment?</em></h1><div id="formatGrid" class="format-grid"></div></section>
 <section id="intro" class="screen" hidden><h1>Have a<br><em>business card?</em></h1>
  <button id="scanStart" class="primary">Scan business card</button>
- <button id="skipCard" class="outline">Skip card</button><button id="changeFormat" class="quiet">Change image type</button>
+ <button id="skipCard" class="outline">Skip card</button><button id="changeFormat" class="quiet">Back to start</button>
 
 </section>
 <section id="card" class="screen" hidden>
@@ -30,17 +30,17 @@
  <p id="cardStatus" role="status"></p><button id="readCard" class="primary">Scan card</button><button id="cardSkip" class="outline">Skip</button>
 </section>
 <section id="category" class="screen" hidden>
- <h1>Choose your style.</h1><p id="cardSummary" role="status"></p>
+ <h1>Pick your caricature style.</h1><p id="cardSummary" role="status"></p>
  <div id="roleGrid" class="role-grid"></div><button id="categoryBack" class="quiet">Back</button>
 </section>
 <section id="camera" class="screen" hidden>
- <p class="eyebrow" id="selectedRole">YOUR HEADSHOT</p><h1>Ready?</h1>
- <p>One person. Face and shoulders in the guide.</p>
+ <p class="eyebrow" id="selectedRole">YOUR CARICATURE</p><h1>Ready?</h1>
+ <p>One person. Face and shoulders in the guide. We’ll turn this into a playful professional cartoon.</p>
  <div class="camera-frame" id="photoFrame"><video id="photoVideo" autoplay playsinline muted></video><div class="face-guide"></div><div id="countdown" hidden></div></div>
  <p id="cameraStatus" role="status">Starting camera…</p><button id="takePhoto" class="primary">Take photo</button><button id="cameraBack" class="outline">Change style</button>
 </section>
 <section id="contact" class="screen" hidden>
- <h1 id="contactHeading">Confirm your number.</h1><p id="generationStatus" role="status">Your photo is generating.</p>
+ <h1 id="contactHeading">Confirm your number.</h1><p id="generationStatus" role="status">Your caricature is generating.</p>
  <form id="contactForm">
  <label for="phoneInput">Mobile number <span>Use this number to unlock your photo.</span></label><input id="phoneInput" type="text" inputmode="tel" maxlength="20" autocomplete="off" required>
  <details id="optionalDetails"><summary>Name, company &amp; email (optional)</summary><div class="contact-extras"><div><label for="nameInput">Name <span>optional</span></label><input id="nameInput" type="text" maxlength="120" autocomplete="off"></div><div><label for="companyInput">Company <span>optional</span></label><input id="companyInput" type="text" maxlength="120" autocomplete="off"></div></div>
@@ -51,7 +51,7 @@
  </form>
 </section>
 <section id="wait" class="screen" hidden>
- <h1>Creating your image…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
+ <h1>Creating your caricature…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
  <div id="logoCube" class="logo-cube">
  <h2>Logo Cube</h2><div class="cube-navigation">
  <button type="button" data-view="up" class="cube-up" aria-label="Show upper side">↑</button>
@@ -66,14 +66,14 @@
  </div><button id="editContact" class="quiet">Edit details</button>
 </section>
 <section id="review" class="screen" hidden>
- <h1>Your professional look.</h1>
+ <h1>Meet your caricature.</h1>
  <div class="comparison"><figure><img id="reviewImage" alt="Your image for review"></figure></div>
  <p id="photoNotice" role="status"></p><p id="claimError" role="alert" class="error"></p>
  <button id="approvePhoto" class="primary">Yes · Get QR</button><button id="regeneratePhoto" class="outline">Try another version</button><button id="retakePhoto" class="outline">Retake</button><button id="reviewContact" class="quiet">Edit number</button>
 </section>
 <section id="result" class="screen" hidden>
- <h1>All yours.</h1><div class="takeaway"><img id="resultImage" alt="Your approved headshot"><div><img id="qrImage" class="qr" alt="Scan to open your image"><p>Scan and enter the <strong>same number</strong> to save.</p><p id="shortLink" class="small"></p></div></div>
- <p>Post your photo and tag RPB Law Firm and PowerWyze!</p>
+ <h1>All yours.</h1><div class="takeaway"><img id="resultImage" alt="Your approved caricature"><div><img id="qrImage" class="qr" alt="Scan to open your image"><p>Scan and enter the <strong>same number</strong> to save.</p><p id="shortLink" class="small"></p></div></div>
+ <p>Post your caricature and tag RPB Law Firm and PowerWyze!</p>
  <button id="doneButton" class="primary">Done</button>
 </section>
 <section id="errorScreen" class="screen" hidden><h1>Let’s try again.</h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry</button><button id="errorRetake" class="outline">Retake</button></section>

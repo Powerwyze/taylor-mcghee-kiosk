@@ -6,22 +6,22 @@ import {BlueprintVoice} from './blueprint-voice.js';
 import {CameraSentry} from './host-sentry.js';
 const $=id=>document.getElementById(id);
 let stopGame=null;
-const formats=[['banner','LinkedIn banner'],['profile','Profile picture'],['headshot','Headshot']];
+const formats=[['caricature','Create my caricature']];
 const roles=[
- ['entrepreneur','Entrepreneur','Warm, approachable founder'],
- ['tech','Tech enthusiast','Clean, modern studio'],
- ['vc','VC','Refined, understated light'],
- ['law','Law firm','Polished, professional portrait'],
- ['bluecollar','Blue collar','Authentic skilled-trades professional'],
- ['executive','Executive','Confident, classic leadership'],
- ['community','Community leader','Warm, welcoming presence']
+ ['entrepreneur','Founder Spark','Warm, confident business energy'],
+ ['tech','Tech Trailblazer','Smart, modern and playful'],
+ ['vc','Deal Maker','Polished with a touch of flair'],
+ ['law','Legal Leader','Professional and approachable'],
+ ['bluecollar','Master Maker','Proud and down to earth'],
+ ['executive','Executive Energy','Bold, upbeat leadership'],
+ ['community','Community Connector','Welcoming and vibrant']
 ];
 let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
 let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',generationErrorCode='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
 const idle=new GuestIdle({onIdle:()=>reset(false)});
 function protectedWork(){return captureBusy||generating||claimBusy||!!cardController;}
 function refreshIdle(){idle.setBusy(protectedWork());}
-function snapshot(){return {screen,format,category:role,soloHeadshot:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
+function snapshot(){return {screen,format,category:role,soloCaricature:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
 function notify(speak=false){voice.note('Authoritative app state: '+JSON.stringify(snapshot()),speak);}
 function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen=name;$('kiosk').dataset.screen=name;$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
  ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','intro','card'].includes(name)?0:['category','camera'].includes(name)?1:2)));
@@ -40,7 +40,7 @@ const voice=new BlueprintVoice({
   if(name==='skip_card'&&['intro','card'].includes(screen)){skipCard();return snapshot();}
   if(name==='open_card_camera'&&screen==='intro'){openCard();return {accepted:true};}
   if(name==='choose_category'&&screen==='category'&&roles.some(r=>r[0]===args.category)){chooseRole(args.category);return {accepted:true};}
-  if(name==='take_headshot'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takeHeadshot();return {accepted:true};}
+  if(name==='take_caricature'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takeCaricature();return {accepted:true};}
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
  }
 });
@@ -95,11 +95,11 @@ async function readCard(){
 for(const [id,label,line] of roles){const b=document.createElement('button');b.className='role-card';b.dataset.role=id;const title=document.createElement('strong'),desc=document.createElement('span');title.textContent=label;desc.textContent=line;b.append(title);b.onclick=()=>chooseRole(id);$('roleGrid').append(b);}
 async function chooseRole(id){if(!['category','camera','review','errorScreen'].includes(screen)||protectedWork())return;role=id;await openPhoto();}
 async function openPhoto(){
- const epoch=version;generationError='';generationErrorCode='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR HEADSHOT';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
+ const epoch=version;generationError='';generationErrorCode='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR CARICATURE';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
  try{await camera($('photoVideo'));if(epoch!==version||screen!=='camera')return;$('takePhoto').disabled=false;$('cameraStatus').textContent='5-second countdown after you tap.';notify();}
  catch(e){if(epoch===version&&e.name!=='AbortError'){$('cameraStatus').textContent=cameraErrorMessage(e);$('takePhoto').disabled=false;$('takePhoto').textContent='Retry camera';}}
 }
-async function takeHeadshot(){
+async function takeCaricature(){
  if(screen!=='camera'||captureBusy||generating)return;
  if(!cameraStream){$('takePhoto').textContent='Take photo';return openPhoto();}
  const epoch=version,cam=cameraController;captureBusy=true;$('takePhoto').disabled=true;refreshIdle();voice.quiet(true);notify();
@@ -108,26 +108,26 @@ async function takeHeadshot(){
   const b=await freeze($('photoVideo'));
   if(epoch!==version||cam.signal.aborted)return;
   if(sourceUrl)URL.revokeObjectURL(sourceUrl);source=b;sourceUrl=URL.createObjectURL(b);stopCamera();
-  contactConfirmed=false;result=null;contact=null;$('optionalDetails').open=['nameInput','companyInput','emailInput'].some(id=>$(id).value.trim());show('contact');$('generationStatus').textContent='Your photo is generating.';
+  contactConfirmed=false;result=null;contact=null;$('optionalDetails').open=['nameInput','companyInput','emailInput'].some(id=>$(id).value.trim());show('contact');$('generationStatus').textContent='Your caricature is generating.';
   generate(); // Deliberately independent of contact entry.
- }catch(e){if(epoch===version&&!cam.signal.aborted)$('cameraStatus').textContent='Capture did not finish. Tap Take headshot to try again.';}
+ }catch(e){if(epoch===version&&!cam.signal.aborted)$('cameraStatus').textContent='Capture did not finish. Tap Take photo to try again.';}
  finally{if(epoch===version){captureBusy=false;$('countdown').hidden=true;$('takePhoto').disabled=false;voice.quiet(false);refreshIdle();}}
 }
 async function generate(){
  if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';generationErrorCode='';refreshIdle();notify();
  try{
-  const form=new FormData();form.append('image',source,'headshot-source.jpg');form.append('role',role);form.append('format',format);
-  const r=await fetch('/api/headshot',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(235000)])});
+  const form=new FormData();form.append('image',source,'caricature-source.jpg');form.append('role',role);form.append('format',format);
+  const r=await fetch('/api/caricature',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(235000)])});
   if(!r.ok){const d=await r.json().catch(()=>({}));throw Object.assign(Error(d.error||'The image did not finish.'),{code:d.code});}
-  const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No photo returned.');
+  const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No caricature returned.');
   const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
-  if(!id||!claim)throw Error('The photo link was incomplete.');
+  if(!id||!claim)throw Error('The caricature link was incomplete.');
   if(epoch!==version)return;const url=URL.createObjectURL(blob);const image=new Image();image.src=url;
   try{await image.decode();}catch(e){URL.revokeObjectURL(url);throw e;}
   if(epoch!==version){URL.revokeObjectURL(url);return;}
   if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=url;
-  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your image.')};
-  $('generationStatus').textContent='Photo ready. Confirm to continue.';
+  result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your caricature.')};
+  $('generationStatus').textContent='Caricature ready. Confirm to continue.';
  }catch(e){if(epoch===version&&!controller.signal.aborted){generationErrorCode=e.code||'';generationError=e.message||'The image timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
  finally{if(epoch===version){generating=false;refreshIdle();if(contactConfirmed)advance();notify();}}
 }
@@ -150,7 +150,7 @@ async function approve(){
   const r=await fetch('/api/claim-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...contact,id:result.id,claim:result.claim,confirmed:true,likenessApproved:true}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});const d=await r.json();
   if(!r.ok||!d.ok)throw Error(d.error||'Please try confirming again.');
   if(epoch!==version)return;const link=location.origin+'/p/'+result.id;
-  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then briefly remind them to post their photo and tag RPB Law Firm and PowerWyze. Thank them. No SMS was sent.',true);
+  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then briefly remind them to post their caricature and tag RPB Law Firm and PowerWyze. Thank them. No SMS was sent.',true);
  }catch(e){if(epoch===version)$('claimError').textContent=e.message;}
  finally{if(epoch===version){claimBusy=false;$('approvePhoto').disabled=false;refreshIdle();}}
 }

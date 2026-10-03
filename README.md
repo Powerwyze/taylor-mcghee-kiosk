@@ -1,7 +1,5 @@
-# RPB LegacyCon kiosk
+# RPB LegacyCon caricature kiosk (kiosk2)
 
-DEMO-013 portrait kiosk for RPB Law Firm at LegacyCon: BPN Summit.
+A separate LegacyCon kiosk at https://rpb-legacycon-kiosk2.vercel.app/ . Guests choose a professional big-head cartoon style, take one camera photo, optionally scan a business card, confirm their mobile number, review the generated caricature, and receive a QR link. No SMS or email is sent.
 
-Flow: home, choose a look, 3-2-1 camera, required US mobile number with optional SMS consent, memory-match wait, then a result QR. The phone page at `/p/<id>` stays locked until the guest confirms that same number. No SMS is sent.
-
-Leads are encrypted in the Vercel Blob store `rpb-legacycon`. Photo records store a phone hash only.
+Source branch: `legacycon-kiosk2-caricature`. This branch is deployed to Vercel project `rpb-legacycon-kiosk2`; the original `legacycon-2026` branch and kiosk remain unchanged. The two deployments currently share the same Vercel Blob store.

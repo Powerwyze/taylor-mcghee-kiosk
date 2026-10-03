@@ -32,11 +32,11 @@ module.exports = async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   res.end(JSON.stringify({
     ok: true,
-    app: "rpb-legacycon-kiosk",
+    app: "rpb-legacycon-kiosk2",
     demo: "DEMO-013",
     openai,
     voiceModel: "gpt-live-1",
-    flow: "blueprint-headshot-card-qr-v2",
+    flow: "blueprint-caricature-card-qr-v1",
     voiceConfigured: Boolean(process.env.OPENAI_API_KEY),
     cardConfigured: Boolean(process.env.OPENAI_API_KEY),
     email: emailReady(),

@@ -60,10 +60,6 @@
     "api/qr.js": {
       "maxDuration": 15
     },
-    "api/headshot.js": {
-      "maxDuration": 240,
-      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
-    },
     "api/read-card.js": {
       "maxDuration": 60,
       "includeFiles": "{lib/logos/**,public/assets/logos/**}"
@@ -74,6 +70,10 @@
     },
     "api/host-session.js": {
       "maxDuration": 60,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+    },
+    "api/caricature.js": {
+      "maxDuration": 240,
       "includeFiles": "{lib/logos/**,public/assets/logos/**}"
     }
   }
