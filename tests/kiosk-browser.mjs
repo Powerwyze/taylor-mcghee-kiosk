@@ -27,25 +27,25 @@ try{
  await page.locator('#voiceButton').click();await page.waitForFunction(()=>document.getElementById('voiceStatus').textContent.includes('unavailable'),{},{timeout:35000});
  assert.equal(await page.locator('#phoneInput').inputValue(),'2025550123','voice failure preserves contact draft');
 
- await page.locator('#contactConfirm').click();await page.locator('#legalMemory').waitFor({state:'visible'});assert.equal(claims,0);
- assert.equal(await page.locator('.memory-card').count(),12);
- await page.waitForFunction(()=>[...document.querySelectorAll('.memory-front img')].every(i=>i.complete&&i.naturalWidth>=640));
- const ids=await page.locator('.memory-card').evaluateAll(els=>els.map(e=>e.dataset.card));
- const first=0,other=ids.findIndex(id=>id!==ids[0]);
- await page.locator('.memory-card').nth(first).click();await page.locator('.memory-card').nth(other).click();
- assert.equal(await page.locator('#legalMemory').getAttribute('data-locked'),'true');
- const blocked=ids.findIndex((id,i)=>i!==first&&i!==other);await page.locator('.memory-card').nth(blocked).click();
- assert.equal(await page.locator('.memory-card[data-revealed=true]').count(),2,'third tap blocked');
- await page.waitForFunction(()=>document.getElementById('legalMemory').dataset.locked==='false');
- assert.equal(await page.locator('.memory-card[data-revealed=true]').count(),0,'mismatch turns back');
- for(const id of [...new Set(ids)].slice(0,3)){const pair=page.locator('.memory-card[data-card='+id+']');await pair.nth(0).click();await pair.nth(1).click();}
- await page.waitForTimeout(550);
- await page.screenshot({path:'artifacts/portrait-wait.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile-game.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.setViewportSize({width:1080,height:1920});
- for(const id of [...new Set(ids)].slice(3)){const pair=page.locator('.memory-card[data-card='+id+']');await pair.nth(0).click();await pair.nth(1).click();}
- assert.equal(await page.locator('#legalMemory').getAttribute('data-matches'),'6');assert.equal(await page.locator('.memory-card:disabled').count(),12);
- await page.locator('[data-memory-reset]').click();assert.equal(await page.locator('#legalMemory').getAttribute('data-matches'),'0');assert.equal(await page.locator('.memory-card[data-revealed=true]').count(),0);
 
- release();await page.locator('#approvePhoto').waitFor({state:'visible'});assert.equal(claims,0,'QR not claimed before likeness approval');assert.equal(await page.locator('#legalMemory').getAttribute('data-running'),'false','photo reveal stops game');
+ await page.locator('#contactConfirm').click();await page.locator('#legalMatch').waitFor({state:'visible'});assert.equal(claims,0);
+ assert.equal(await page.locator('.legal-gem').count(),36);
+ await page.waitForFunction(()=>[...document.querySelectorAll('.legal-gem img')].every(i=>i.complete&&i.naturalWidth===640));
+ const pair=await page.evaluate(async()=>{const {legalMove}=await import('/legal-match-engine.js');return legalMove([...document.querySelectorAll('.legal-gem')].map(e=>Number(e.dataset.kind)));});
+ const from=await page.locator('.legal-gem').nth(pair[0]).boundingBox(),to=await page.locator('.legal-gem').nth(pair[1]).boundingBox();
+ await page.mouse.move(from.x+from.width/2,from.y+from.height/2);await page.mouse.down();await page.mouse.move(to.x+to.width/2,to.y+to.height/2,{steps:5});await page.mouse.up();
+ await page.waitForFunction(()=>Number(document.getElementById('legalMatch').dataset.score)>0);
+ await page.waitForFunction(()=>document.getElementById('legalMatch').dataset.busy==='false');
+ assert.equal(await page.locator('#legalMatch').getAttribute('data-moves'),'1');
+ await page.locator('[data-match-hint]').click();assert.equal(await page.locator('.legal-gem.hinted').count(),2);
+ await page.screenshot({path:'artifacts/portrait-wait.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile-game.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.setViewportSize({width:1080,height:1920});
+ await page.locator('[data-match-reset]').click();assert.equal(await page.locator('#legalMatch').getAttribute('data-score'),'0');
+ const invalid=await page.evaluate(async()=>{const {adjacent,matches,swapped}=await import('/legal-match-engine.js');const board=[...document.querySelectorAll('.legal-gem')].map(e=>Number(e.dataset.kind));for(let i=0;i<36;i++)for(const j of [i+1,i+6])if(j<36&&adjacent(i,j)&&!matches(swapped(board,i,j)).length)return [i,j];});
+ const before=await page.locator('.legal-gem').evaluateAll(els=>els.map(e=>e.dataset.kind));
+ await page.locator('.legal-gem').nth(invalid[0]).focus();await page.keyboard.press('Enter');await page.locator('.legal-gem').nth(invalid[1]).focus();await page.keyboard.press('Enter');
+ await page.waitForTimeout(500);assert.equal(await page.locator('#legalMatch').getAttribute('data-score'),'0');assert.deepEqual(await page.locator('.legal-gem').evaluateAll(els=>els.map(e=>e.dataset.kind)),before,'invalid swap returns pieces');
+
+ release();await page.locator('#approvePhoto').waitFor({state:'visible'});assert.equal(claims,0,'QR not claimed before likeness approval');assert.equal(await page.locator('#legalMatch').getAttribute('data-running'),'false','photo reveal stops game');
  assert.equal(await page.locator('#sourceImage').count(),0,'original photo is not displayed');await page.screenshot({path:'artifacts/portrait-review.png',fullPage:true});await page.locator('#approvePhoto').click();await page.locator('#qrImage').waitFor({state:'visible'});assert.equal(claims,1);
  await page.locator('#doneButton').click();assert.equal(await page.locator('#phoneInput').inputValue(),'');assert.equal(await page.locator('#nameInput').inputValue(),'');assert.equal(await page.locator('#resultImage').getAttribute('src'),null);
  await page.setViewportSize({width:390,height:844});await page.reload();await page.screenshot({path:'artifacts/mobile-home.png',fullPage:true});

@@ -1,4 +1,4 @@
-import {mountLegalMemory} from './legal-memory.js';
+import {mountLegalMatch} from './legal-match.js';
 import {startCameraPreview,cameraErrorMessage} from './vendor/camera-preview.js';
 import {runCountdown} from './vendor/host-countdown.js';
 import {GuestIdle} from './vendor/host-idle.js';
@@ -156,7 +156,7 @@ async function approve(){
 }
 function retake(){if(protectedWork())return;result=null;contactConfirmed=false;contact=null;attempts=0;if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl='';openPhoto();}
 function editContact(){if(claimBusy)return;contactConfirmed=false;show('contact');}
-function buildGame(){stopGame?.();stopGame=mountLegalMemory($('legalMemory'));}
+function buildGame(){stopGame?.();stopGame=mountLegalMatch($('legalMatch'));}
 for(const id of ['phoneInput','nameInput','companyInput','emailInput']){$(id).onfocus=()=>keyboardInput=$(id);$(id).oninput=()=>{contactConfirmed=false;idle.touch();};}
 function toggleKeyboard(){const open=$('keyboard').hidden;$('keyboard').hidden=!open;$('keyboardToggle').textContent=open?'Hide touch keyboard':'Show touch keyboard';for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).inputMode=open?'none':id==='phoneInput'?'tel':id==='emailInput'?'email':'text';}
 let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-','SPACE SHIFT LEFT RIGHT DELETE']){const el=document.createElement('div');el.className='key-row';for(const key of row.includes(' ')?row.split(' '):[...row]){const b=document.createElement('button');b.type='button';b.textContent=key;b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{const t=keyboardInput;let start=t.selectionStart??t.value.length,end=t.selectionEnd??start;if(key==='SHIFT'){shift=!shift;b.setAttribute('aria-pressed',shift);return;}if(key==='LEFT'||key==='RIGHT'){const p=Math.max(0,Math.min(t.value.length,start+(key==='LEFT'?-1:1)));t.setSelectionRange(p,p);}else{if(key==='DELETE'&&start===end)start=Math.max(0,start-1);const s=key==='DELETE'?'':key==='SPACE'?' ':shift?key.toUpperCase():key;if(t.value.length-end+start+s.length<=t.maxLength)t.setRangeText(s,start,end,'end');t.dispatchEvent(new Event('input'));}t.focus({preventScroll:true});};el.append(b);}$('keyboard').append(el);}
