@@ -6,7 +6,7 @@ test('composited output is stored and a failed composition never returns the sou
  Module._load=function(id,...args){
   if(id==='../lib/portrait-branding')return {brandPortrait:async b=>b};
   if(id==='../lib/http')return {sameOrigin:()=>true,upload:async()=>({bytes:source,maskBytes:Buffer.from('mask'),field:n=>n==='format'?'expanded':''}),reply:(r,s,d)=>{r.statusCode=s;r.end(JSON.stringify(d));}};
-  if(id==='../lib/expanded-photo')return {FORMAT:{id:'expanded',width:1536,height:1152},imageModel:()=> 'mediapipe-selfie-segmenter',composePhoto:async()=>{if(fail)throw Error('composite');return expanded;}};
+  if(id==='../lib/expanded-photo')return {FORMAT:{id:'expanded',width:1536,height:1152},imageModel:()=> 'mediapipe-deeplab-person',composePhoto:async()=>{if(fail)throw Error('composite');return {jpeg:expanded,mode:'person-composite'};}};
   if(id==='../lib/storage')return {photoId:()=> 'synthetic-id',savePhotoRecord:async d=>saved.push(d)};
   return originalLoad.call(this,id,...args);
  };
