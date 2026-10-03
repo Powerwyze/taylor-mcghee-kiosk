@@ -15,7 +15,7 @@ const roles=[
  ['community','Community leader','Warm, welcoming presence']
 ];
 let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
-let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
+let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',generationErrorCode='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
 const idle=new GuestIdle({onIdle:()=>reset(false)});
 function protectedWork(){return captureBusy||generating||claimBusy||!!cardController;}
 function refreshIdle(){idle.setBusy(protectedWork());}
@@ -49,7 +49,7 @@ function reset(manual=true){
  stopCamera();voice.stop();if(manual){sentry.disable();sentryEnabledByOperator=false;}else if(sentry.enabled)sentry.finish({immediate:true});
  generating=false;claimBusy=false;captureBusy=false;attempts=0;gameVersion++;
  for(const url of [sourceUrl,resultUrl])if(url)URL.revokeObjectURL(url);
- source=null;result=null;sourceUrl='';resultUrl='';format='';role='';contactConfirmed=false;contact=null;generationError='';
+ source=null;result=null;sourceUrl='';resultUrl='';format='';role='';contactConfirmed=false;contact=null;generationError='';generationErrorCode='';
  for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).value='';
  for(const id of ['sourceImage','reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
  $('optionalDetails').open=false;$('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='';$('countdown').hidden=true;
@@ -93,7 +93,7 @@ async function readCard(){
 for(const [id,label,line] of roles){const b=document.createElement('button');b.className='role-card';b.dataset.role=id;const title=document.createElement('strong'),desc=document.createElement('span');title.textContent=label;desc.textContent=line;b.append(title);b.onclick=()=>chooseRole(id);$('roleGrid').append(b);}
 async function chooseRole(id){if(!['category','camera','review','errorScreen'].includes(screen)||protectedWork())return;role=id;await openPhoto();}
 async function openPhoto(){
- const epoch=version;generationError='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR HEADSHOT';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
+ const epoch=version;generationError='';generationErrorCode='';show('camera');$('selectedRole').textContent=roles.find(r=>r[0]===role)?.[1]||'YOUR HEADSHOT';$('takePhoto').disabled=true;$('cameraStatus').textContent='Starting camera…';
  try{await camera($('photoVideo'));if(epoch!==version||screen!=='camera')return;$('takePhoto').disabled=false;$('cameraStatus').textContent='5-second countdown after you tap.';notify();}
  catch(e){if(epoch===version&&e.name!=='AbortError'){$('cameraStatus').textContent=cameraErrorMessage(e);$('takePhoto').disabled=false;$('takePhoto').textContent='Retry camera';}}
 }
@@ -112,7 +112,7 @@ async function takeHeadshot(){
  finally{if(epoch===version){captureBusy=false;$('countdown').hidden=true;$('takePhoto').disabled=false;voice.quiet(false);refreshIdle();}}
 }
 async function generate(){
- if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';refreshIdle();notify();
+ if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';generationErrorCode='';refreshIdle();notify();
  try{
   const form=new FormData();form.append('image',source,'headshot-source.jpg');form.append('role',role);form.append('format',format);
   const r=await fetch('/api/headshot',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(235000)])});
@@ -126,14 +126,14 @@ async function generate(){
   if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl=url;
   result={id,claim,path:r.headers.get('X-RPB-Path'),notice:decodeURIComponent(r.headers.get('X-Photo-Notice')||'Please check your image.')};
   $('generationStatus').textContent='Photo ready. Confirm to continue.';
- }catch(e){if(epoch===version&&!controller.signal.aborted){generationError=e.message||'The image timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
+ }catch(e){if(epoch===version&&!controller.signal.aborted){generationErrorCode=e.code||'';generationError=e.message||'The image timed out. Try again.';$('generationStatus').textContent='Confirm to see photo options.';}}
  finally{if(epoch===version){generating=false;refreshIdle();if(contactConfirmed)advance();notify();}}
 }
 function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]==='1')n=n.slice(1);return /^[2-9]\d{2}[2-9]\d{6}$/.test(n)?n:'';}
 function advance(){
  if(!contactConfirmed)return;
  if(result){$('sourceImage').src=sourceUrl;$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;$('regeneratePhoto').disabled=attempts>=3;show('review');gameVersion++;return;}
- if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
+ if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').hidden=generationErrorCode==='RETAKE';$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
  show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, offer one brief optional question and listen. Do not recite private details.',true);
 }
 $('contactForm').onsubmit=e=>{
@@ -169,10 +169,10 @@ $('keyboardToggle').onclick=toggleKeyboard;
 $('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
 $('categoryBack').onclick=()=>show('intro');$('takePhoto').onclick=takeHeadshot;
 $('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('category');};
-$('regeneratePhoto').onclick=()=>{if(protectedWork()||!source||attempts>=3||screen!=='review')return;result=null;generationError='';show('wait');buildGame();generate();};
+$('regeneratePhoto').onclick=()=>{if(protectedWork()||!source||attempts>=3||screen!=='review')return;result=null;generationError='';generationErrorCode='';show('wait');buildGame();generate();};
 $('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
 $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;
-$('retryPhoto').onclick=()=>{if(generating||attempts>=3)return;generationError='';show('wait');buildGame();generate();};
+$('retryPhoto').onclick=()=>{if(generating||attempts>=3||generationErrorCode==='RETAKE')return;generationError='';generationErrorCode='';show('wait');buildGame();generate();};
 $('doneButton').onclick=()=>reset(false);$('resetButton').onclick=()=>reset(true);
 $('voiceButton').onclick=()=>voice.start();$('voiceStop').onclick=()=>voice.stop();$('audioResume').onclick=()=>voice.resumeAudio();
 $('sentryButton').onclick=async()=>{if(sentry.enabled){sentry.disable();sentryEnabledByOperator=false;return;}if(screen!=='home')return;try{await voice.prepareAudio();const m=await navigator.mediaDevices.getUserMedia({audio:true});m.getTracks().forEach(t=>t.stop());sentryEnabledByOperator=true;await sentry.enable();}catch{$('sentryStatus').textContent='Camera welcome needs camera and microphone permission. Touch works without microphone access.';}};

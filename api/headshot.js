@@ -12,7 +12,7 @@ module.exports=async(req,res)=>{
   if(!Object.hasOwn(FORMATS,type)||!Object.hasOwn(ROLES,role))return reply(res,400,{error:'Choose an image type and style.'});
   const source=await sharp(bytes).rotate().resize({width:1536,height:1536,fit:'inside',withoutEnlargement:true}).jpeg({quality:96}).toBuffer();
   stage='source-check';const sourceCheck=await checkSource(source);
-  if(!sourceCheck?.usable)return reply(res,422,{error:'Retake with one person, your whole face visible and good light.',code:'RETAKE'});
+  if(!sourceCheck?.usable){console.info('source_retake',JSON.stringify({issue:sourceCheck.issue}));return reply(res,422,{error:sourceCheck.reason||'Retake with your face clearly visible.',code:'RETAKE'});}
   stage='generation';const edited=await editHeadshot(source,role,type);
   stage='format';const final=await formatOutput(edited,type);
   stage='review';const review=await checkLikeness(source,final,type);
