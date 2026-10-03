@@ -20,7 +20,7 @@ function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
 const voice=new BlueprintVoice({
- onStatus:(text,ready)=>{$('voiceStatus').textContent=ready?'Listening…':/connecting/i.test(text)?'Connecting…':/unavailable|denied|timed out|connection problem|disconnected|could not/i.test(text)?'Voice unavailable. Use buttons or retry.':'';$('voiceButton').textContent=ready?'Voice connected':'Talk to AI guide';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(ready?30000:150000);refreshIdle();},
+ onStatus:(text,ready)=>{$('voiceStatus').textContent=ready?'Listening…':/connecting/i.test(text)?'Connecting…':/unavailable|denied|timed out|connection problem|disconnected|could not/i.test(text)?'Voice unavailable. Use buttons or retry.':'';$('voiceButton').textContent=ready?'Voice connected':'Talk to AI guide';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(150000);refreshIdle();},
  onCaption:text=>{$('hostCaptions').textContent=text;},
  onActivity:()=>idle.touch(),
  onAudioBlocked:()=>$('audioResume').hidden=false,
