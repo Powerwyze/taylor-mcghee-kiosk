@@ -44,3 +44,5 @@ details[open]>summary{margin-bottom:8px}.booth-options{margin:0;max-width:440px}
 .shell{position:relative;z-index:1;background:linear-gradient(145deg,rgba(35,14,23,.72),rgba(20,12,18,.76))}
 button.outline,.role-card{background:rgba(35,14,23,.72)}
 @media(prefers-reduced-motion:reduce){.background-video{display:none}}
+
+body{background:#1c1016 url("/assets/legacycon-background.jpg") center / cover fixed no-repeat}

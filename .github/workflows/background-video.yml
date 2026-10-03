@@ -13,6 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: legacycon-2026
+          fetch-depth: 0
       - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
       - name: Encode silent browser formats
         run: |
@@ -29,4 +30,5 @@ jobs:
           git config user.email "bryan.stewart@powerwyze.com"
           git add public/assets/legacycon-background.*
           git commit -m "Encode silent background video and poster remotely"
+          git pull --rebase origin legacycon-2026
           git push origin HEAD:legacycon-2026
