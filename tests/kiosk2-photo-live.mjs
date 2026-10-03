@@ -1,10 +1,12 @@
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-const base='https://rpb-legacycon-kiosk2.vercel.app';
+import {chromium} from 'playwright';
+const base=process.env.KIOSK_BASE_URL||'https://rpb-legacycon-kiosk2.vercel.app';
 await mkdir('artifacts',{recursive:true});
 const source=await readFile('tests/fixtures/person.jpg');
-const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'fixture.jpg');form.append('format','expanded');
+const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});let mask;try{const page=await browser.newPage();await page.route('**/fixture-person.jpg',r=>r.fulfill({contentType:'image/jpeg',body:source}));await page.goto(base);mask=Buffer.from(await page.evaluate(async()=>{const {createPersonMask}=await import('/person-mask.js');return [...new Uint8Array(await (await createPersonMask(await (await fetch('/fixture-person.jpg')).blob())).arrayBuffer())]}));}finally{await browser.close();}
+const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'fixture.jpg');form.append('mask',new Blob([mask],{type:'image/png'}),'mask.png');form.append('format','expanded');
 const response=await fetch(base+'/api/expanded-photo',{method:'POST',headers:{Origin:base},body:form,signal:AbortSignal.timeout(235000)});
 if(!response.ok)throw Error('Generation failed: '+response.status+' '+JSON.stringify(await response.json().catch(()=>({}))));
 const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.deepEqual([meta.width,meta.height],[1536,1152]);assert.ok(jpeg.length>10000);
