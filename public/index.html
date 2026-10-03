@@ -53,11 +53,16 @@
 <section id="wait" class="screen" hidden>
  <h1>Creating your image…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
  <div id="logoCube" class="logo-cube">
- <h2>Logo Cube</h2><div data-cube-view class="cube-view"></div>
+ <h2>Logo Cube</h2><div class="cube-navigation">
+ <button type="button" data-view="up" class="cube-up" aria-label="Show upper side">↑</button>
+ <button type="button" data-view="left" class="cube-left" aria-label="Show left side">←</button>
+ <div data-cube-view class="cube-view"></div>
+ <button type="button" data-view="right" class="cube-right" aria-label="Show right side">→</button>
+ <button type="button" data-view="down" class="cube-down" aria-label="Show lower side">↓</button>
+ </div>
  <p class="small" data-cube-status role="status"></p>
- <p class="small">Drag to look around. Turn a face to rebuild the logos.</p>
- <label for="cubeFace">Choose a face</label><select id="cubeFace" aria-label="Cube face"></select>
- <div class="cube-controls"><button type="button" data-clockwise>Turn ↻</button><button type="button" data-counter>Turn ↺</button><button type="button" data-undo>Undo</button><button type="button" data-shuffle>Reshuffle</button></div>
+ <p class="small">Swipe a row or column to turn it. Arrows change your view.</p>
+ <div class="cube-controls"><button type="button" data-undo>Undo</button><button type="button" data-shuffle>Reshuffle</button></div>
  </div><button id="editContact" class="quiet">Edit details</button>
 </section>
 <section id="review" class="screen" hidden>

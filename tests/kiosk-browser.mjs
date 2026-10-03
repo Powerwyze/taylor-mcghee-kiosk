@@ -20,11 +20,18 @@ try{
  await page.locator('#voiceButton').click();await page.waitForFunction(()=>document.getElementById('voiceStatus').textContent.includes('unavailable'),{},{timeout:35000});
  assert.equal(await page.locator('#phoneInput').inputValue(),'2025550123','voice failure preserves contact draft');
  await page.locator('#contactConfirm').click();await page.locator('#logoCube').waitFor({state:'visible'});assert.equal(claims,0);
- assert.equal(await page.locator('#cubeFace option').count(),6);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'false');
+ assert.equal(await page.locator('#cubeFace').count(),0);assert.equal(await page.locator('[data-view]').count(),4);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'false');
  for(let i=0;i<4;i++){await page.locator('[data-undo]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');}
  assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','inverse turns restore logo faces');
- await page.locator('[data-clockwise]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'false');
- await page.locator('[data-counter]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true');
+ const swipeCube=async(dx,dy)=>{const b=await page.locator('[data-cube-view]').boundingBox();await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+dx,b.y+b.height/2+dy,{steps:5});await page.mouse.up();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');};
+ await swipeCube(60,0);assert.equal(await page.locator('#logoCube').getAttribute('data-last-move'),'y:0:1');assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'false');
+ await swipeCube(-60,0);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','opposite row swipes restore cube');
+ await swipeCube(0,-60);assert.equal(await page.locator('#logoCube').getAttribute('data-last-move'),'x:0:-1');
+ await swipeCube(0,60);assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','opposite column swipes restore cube');
+ const orientation=await page.locator('#logoCube').getAttribute('data-orientation');
+ await page.locator('[data-view=right]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');assert.notEqual(await page.locator('#logoCube').getAttribute('data-orientation'),orientation);
+ assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','view arrow does not turn puzzle layers');
+ await swipeCube(60,0);await page.locator('[data-undo]').click();await page.waitForFunction(()=>document.getElementById('logoCube').dataset.turning==='false');assert.equal(await page.locator('#logoCube').getAttribute('data-solved'),'true','swipe works after view change');
  await page.locator('[data-shuffle]').click();await page.screenshot({path:'artifacts/portrait-wait.png',fullPage:true});await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile-game.png',fullPage:true});assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.setViewportSize({width:1080,height:1920});
 
  release();await page.locator('#approvePhoto').waitFor({state:'visible'});assert.equal(claims,0,'QR not claimed before likeness approval');assert.equal(await page.locator('#logoCube').getAttribute('data-running'),'false','photo reveal stops game');
