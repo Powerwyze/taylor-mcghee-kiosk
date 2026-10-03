@@ -1,15 +1,13 @@
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import {chromium} from 'playwright';
 const base=process.env.KIOSK_BASE_URL||'https://rpb-legacycon-kiosk2.vercel.app';
 await mkdir('artifacts',{recursive:true});
 const source=await readFile('tests/fixtures/person.jpg');
-const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});let mask;try{const page=await browser.newPage();await page.route('**/fixture-person.jpg',r=>r.fulfill({contentType:'image/jpeg',body:source}));await page.goto(base);mask=Buffer.from(await page.evaluate(async()=>{const {createPersonMask}=await import('/person-mask.js');return [...new Uint8Array(await (await createPersonMask(await (await fetch('/fixture-person.jpg')).blob())).arrayBuffer())]}));}finally{await browser.close();}await writeFile('artifacts/live-person-mask.png',mask);
-const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'fixture.jpg');form.append('mask',new Blob([mask],{type:'image/png'}),'mask.png');form.append('format','expanded');
+const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'fixture.jpg');form.append('format','expanded');
 const response=await fetch(base+'/api/expanded-photo',{method:'POST',headers:{Origin:base},body:form,signal:AbortSignal.timeout(235000)});
 if(!response.ok)throw Error('Generation failed: '+response.status+' '+JSON.stringify(await response.json().catch(()=>({}))));
-const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.ok(meta.width<=1536&&meta.height<=1152&&meta.width>=800&&meta.height>=800);assert.ok(jpeg.length>10000);
+const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.ok(meta.width<=1920&&meta.height<=1920&&meta.width>=800&&meta.height>=800);const original=await sharp(source).metadata();assert.ok(Math.abs(meta.width/meta.height-original.width/original.height)<.01);assert.equal(response.headers.get('X-Photo-Process'),'lighting-only');assert.ok(jpeg.length>10000);
 await writeFile('artifacts/live-expanded-photo.jpg',jpeg);
 const id=response.headers.get('X-Photo-Id'),claim=response.headers.get('X-Claim-Token');assert.ok(id&&claim);
 const wrong=await fetch(base+'/p/'+id+'?token=wrong');assert.equal(wrong.status,404,'QR link requires approval token');
@@ -17,4 +15,4 @@ const approved=await fetch(base+'/api/claim-photo',{method:'POST',headers:{'Cont
 const photoUrl=new URL(data.path,base);const page=await fetch(photoUrl);assert.equal(page.status,200);const html=await page.text();assert.match(html,/Download photo/);assert.doesNotMatch(html,/Mobile number|Confirm your number/);
 const image=await fetch(base+'/api/image?id='+encodeURIComponent(id)+'&token='+encodeURIComponent(data.viewToken)+'&download=1');assert.equal(image.status,200);assert.match(image.headers.get('content-disposition'),/attachment/);assert.ok((await image.arrayBuffer()).byteLength>10000);
 const qr=await fetch(base+'/api/qr?text='+encodeURIComponent(photoUrl.href));assert.equal(qr.status,200);assert.match(qr.headers.get('content-type'),/image\/png/);
-const report={generationStatus:response.status,size:[meta.width,meta.height],bytes:jpeg.length,review:response.headers.get('X-AI-Check'),qrStatus:qr.status,photoPageStatus:page.status,downloadStatus:image.status};await writeFile('artifacts/live-photo-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+const report={generationStatus:response.status,size:[meta.width,meta.height],bytes:jpeg.length,review:response.headers.get('X-Photo-Process'),qrStatus:qr.status,photoPageStatus:page.status,downloadStatus:image.status};await writeFile('artifacts/live-photo-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

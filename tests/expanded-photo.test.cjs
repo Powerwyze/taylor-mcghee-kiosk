@@ -1,16 +1,19 @@
 const {test}=require('node:test');const assert=require('node:assert/strict');const sharp=require('sharp');
-const {FORMAT,composePhoto}=require('../lib/expanded-photo');
-test('person pixels appear over generated backdrop without a rectangular original background',async()=>{
- const source=await sharp({create:{width:200,height:150,channels:3,background:'#22aa22'}}).composite([{input:await sharp({create:{width:60,height:120,channels:3,background:'#e02020'}}).png().toBuffer(),left:70,top:30}]).png().toBuffer();
- const alpha=Buffer.alloc(200*150,0);for(let y=30;y<150;y++)for(let x=70;x<130;x++)alpha[y*200+x]=255;
- const rgba=Buffer.alloc(200*150*4);for(let i=0;i<alpha.length;i++){rgba[i*4]=rgba[i*4+1]=rgba[i*4+2]=255;rgba[i*4+3]=alpha[i]}const mask=await sharp(rgba,{raw:{width:200,height:150,channels:4}}).png().toBuffer();
- const backdrop=await sharp({create:{width:FORMAT.width,height:FORMAT.height,channels:3,background:'#1020d0'}}).png().toBuffer();
- const output=await composePhoto(source,mask,{backdrop});assert.equal(output.mode,'person-composite');const info=await sharp(output.jpeg).metadata();assert.equal(info.width,FORMAT.width);assert.equal(info.height,FORMAT.height);
- const edge=await sharp(output.jpeg).extract({left:5,top:5,width:1,height:1}).raw().toBuffer();assert.ok(edge[2]>edge[1]*2);
- const center=await sharp(output.jpeg).extract({left:760,top:550,width:1,height:1}).raw().toBuffer();assert.ok(center[0]>center[2]);
+const {enhancePhoto}=require('../lib/expanded-photo');
+test('lighting pass brightens the complete camera frame without replacing its scene',async()=>{
+ const source=await sharp({create:{width:800,height:450,channels:3,background:{r:45,g:35,b:50}}})
+  .composite([{input:await sharp({create:{width:160,height:280,channels:3,background:{r:115,g:60,b:45}}}).png().toBuffer(),left:320,top:100}]).png().toBuffer();
+ const {jpeg,mode}=await enhancePhoto(source);assert.equal(mode,'natural-photo');
+ const m=await sharp(jpeg).metadata();assert.deepEqual([m.width,m.height],[800,450]);
+ const before=await sharp(source).raw().toBuffer();const after=await sharp(jpeg).raw().toBuffer();
+ const pixel=(data,x,y)=>[...data.subarray((y*800+x)*3,(y*800+x)*3+3)];
+ const oldBackground=pixel(before,20,20),newBackground=pixel(after,20,20),newPerson=pixel(after,400,220);
+ assert.ok(newBackground[0]>oldBackground[0],'room is brighter');assert.ok(newPerson[0]>newBackground[0]+40,'person remains in original position');
+ assert.ok(pixel(after,20,430)[0]>oldBackground[0],'bottom of original background remains');
 });
-
-test('an inverted mask is corrected and still keeps the person',async()=>{const w=200,h=150;const person=await sharp({create:{width:w,height:h,channels:3,background:'#e02020'}}).png().toBuffer();const bg=await sharp({create:{width:FORMAT.width,height:FORMAT.height,channels:3,background:'#1020d0'}}).png().toBuffer();const rgba=Buffer.alloc(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;rgba[i]=rgba[i+1]=rgba[i+2]=255;rgba[i+3]=(x>=65&&x<135&&y>=25&&y<145)?0:255;}const inverted=await sharp(rgba,{raw:{width:w,height:h,channels:4}}).png().toBuffer();const result=await composePhoto(person,inverted,{backdrop:bg});assert.equal(result.mode,'person-composite');const center=await sharp(result.jpeg).extract({left:760,top:550,width:1,height:1}).raw().toBuffer();assert.ok(center[0]>center[2]);});
-test('missing or empty mask keeps the entire original camera image',async()=>{const photo=await sharp({create:{width:640,height:480,channels:3,background:'#d02030'}}).jpeg().toBuffer();for(const mask of [null,await sharp({create:{width:640,height:480,channels:4,background:{r:255,g:255,b:255,alpha:0}}}).png().toBuffer()]){const output=await composePhoto(photo,mask);assert.equal(output.mode,'original-safe');const pixel=await sharp(output.jpeg).extract({left:760,top:550,width:1,height:1}).raw().toBuffer();assert.ok(pixel[0]>pixel[2]);}});
-test('safe original preserves a wide camera frame without side cropping',async()=>{const photo=await sharp({create:{width:1600,height:900,channels:3,background:'#902030'}}).jpeg().toBuffer();const output=await composePhoto(photo,null);const m=await sharp(output.jpeg).metadata();assert.equal(output.mode,'original-safe');assert.deepEqual([m.width,m.height],[1536,864]);});
-test('a mask that keeps scenery at the frame edge falls back to the full original photo',async()=>{const w=640,h=480;const source=await sharp({create:{width:w,height:h,channels:3,background:'#a02030'}}).jpeg().toBuffer();const rgba=Buffer.alloc(w*h*4);for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4;rgba[i]=rgba[i+1]=rgba[i+2]=255;rgba[i+3]=((x>190&&x<450&&y>40)||(x<15&&y>100&&y<300))?255:0;}const mask=await sharp(rgba,{raw:{width:w,height:h,channels:4}}).png().toBuffer();const output=await composePhoto(source,mask);assert.equal(output.mode,'original-safe');const m=await sharp(output.jpeg).metadata();assert.deepEqual([m.width,m.height],[1536,1152]);});
+test('wide and tall photos keep every edge and their original aspect ratio',async()=>{
+ for(const [width,height]of [[1600,900],[900,1600]]){
+  const source=await sharp({create:{width,height,channels:3,background:'#32333a'}}).png().toBuffer();
+  const {jpeg}=await enhancePhoto(source);const m=await sharp(jpeg).metadata();assert.deepEqual([m.width,m.height],[width,height]);
+ }
+});
