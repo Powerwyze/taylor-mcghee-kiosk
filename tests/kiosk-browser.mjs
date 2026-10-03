@@ -22,6 +22,7 @@ try{
 
  await page.locator('#contactConfirm').click();await page.locator('#legalMemory').waitFor({state:'visible'});assert.equal(claims,0);
  assert.equal(await page.locator('.memory-card').count(),12);
+ await page.waitForFunction(()=>[...document.querySelectorAll('.memory-front img')].every(i=>i.complete&&i.naturalWidth>=640));
  const ids=await page.locator('.memory-card').evaluateAll(els=>els.map(e=>e.dataset.card));
  const first=0,other=ids.findIndex(id=>id!==ids[0]);
  await page.locator('.memory-card').nth(first).click();await page.locator('.memory-card').nth(other).click();
