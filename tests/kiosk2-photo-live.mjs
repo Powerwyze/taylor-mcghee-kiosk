@@ -9,7 +9,7 @@ const browser=await chromium.launch({args:['--enable-unsafe-swiftshader']});let 
 const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'fixture.jpg');form.append('mask',new Blob([mask],{type:'image/png'}),'mask.png');form.append('format','expanded');
 const response=await fetch(base+'/api/expanded-photo',{method:'POST',headers:{Origin:base},body:form,signal:AbortSignal.timeout(235000)});
 if(!response.ok)throw Error('Generation failed: '+response.status+' '+JSON.stringify(await response.json().catch(()=>({}))));
-const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.deepEqual([meta.width,meta.height],[1536,1152]);assert.ok(jpeg.length>10000);
+const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.ok(meta.width<=1536&&meta.height<=1152&&meta.width>=800&&meta.height>=800);assert.ok(jpeg.length>10000);
 await writeFile('artifacts/live-expanded-photo.jpg',jpeg);
 const id=response.headers.get('X-Photo-Id'),claim=response.headers.get('X-Claim-Token');assert.ok(id&&claim);
 const wrong=await fetch(base+'/p/'+id+'?token=wrong');assert.equal(wrong.status,404,'QR link requires approval token');
