@@ -46,3 +46,5 @@ button.outline,.role-card{background:rgba(35,14,23,.72)}
 @media(prefers-reduced-motion:reduce){.background-video{display:none}}
 
 body{background:#1c1016 url("/assets/legacycon-background.jpg") center / cover fixed no-repeat}
+
+.case-chase{max-width:540px;margin:20px auto}.case-chase canvas{display:block;width:100%;height:auto;border:1px solid #c59860;border-radius:12px;touch-action:none}.maze-controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0}.maze-controls [data-dir]{width:54px;height:52px;border:1px solid #ad815b;border-radius:9px;background:#432333;color:#f4d497;font-size:28px}.case-chase [data-status]{margin:10px 0}.case-chase .game-title span{white-space:nowrap}
