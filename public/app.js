@@ -20,7 +20,7 @@ function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
 const voice=new BlueprintVoice({
- onStatus:(text,ready)=>{$('voiceStatus').textContent=ready?'Listening…':/connecting/i.test(text)?'Connecting…':/unavailable|denied|timed out|connection problem|disconnected|could not/i.test(text)?'Voice unavailable. Use buttons or retry.':'';$('voiceButton').textContent=ready?'Voice connected':'Talk to me';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(ready?30000:150000);refreshIdle();},
+ onStatus:(text,ready)=>{$('voiceStatus').textContent=ready?'Listening…':/connecting/i.test(text)?'Connecting…':/unavailable|denied|timed out|connection problem|disconnected|could not/i.test(text)?'Voice unavailable. Use buttons or retry.':'';$('voiceButton').textContent=ready?'Voice connected':'Talk to AI guide';$('voiceButton').hidden=ready;$('voiceStop').hidden=!voice.active;idle.start(ready?30000:150000);refreshIdle();},
  onCaption:text=>{$('hostCaptions').textContent=text;},
  onActivity:()=>idle.touch(),
  onAudioBlocked:()=>$('audioResume').hidden=false,
@@ -29,8 +29,6 @@ const voice=new BlueprintVoice({
   if(name==='get_booth_status')return snapshot();
   if(name==='end_visit'&&args.confirmed===true){reset(false);return {ended:true};}
   if(name==='choose_format'&&screen==='home'&&formats.some(f=>f[0]===args.format)){chooseFormat(args.format);return snapshot();}
-  if(name==='skip_card'&&['intro','card'].includes(screen)){skipCard();return snapshot();}
-  if(name==='open_card_camera'&&screen==='intro'){openCard();return {accepted:true};}
   if(name==='take_photo'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takePhoto();return {accepted:true};}
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
  }
@@ -47,7 +45,7 @@ function reset(manual=true){cancelAvatarHold();$('avatarGestureStatus').textCont
  for(const id of ['reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
  $('optionalDetails').open=false;$('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='';$('countdown').hidden=true;
  $('approvePhoto').disabled=false;$('contactConfirm').disabled=false;$('readCard').disabled=false;
- show('home');idle.start(150000);$('hostCaptions').textContent='';
+ show('home');if(!manual&&sentryEnabledByOperator&&!sentry.enabled)void sentry.enable();idle.start(150000);$('hostCaptions').textContent='';
 }
 async function camera(video){
  stopCamera();const epoch=version,local=new AbortController();cameraController=local;
@@ -61,7 +59,7 @@ async function freeze(video){
  c.getContext('2d').drawImage(video,0,0,c.width,c.height);
  return new Promise((resolve,reject)=>c.toBlob(b=>b?resolve(b):reject(Error('Camera frame could not be saved.')),'image/jpeg',.96));
 }
-function chooseFormat(id){if(screen!=='home'||!formats.some(f=>f[0]===id)||protectedWork())return;format=id;sentry.consume();show('intro');}
+function chooseFormat(id){if(screen!=='home'||!formats.some(f=>f[0]===id)||protectedWork())return;format=id;sentry.consume();if(sentry.enabled)sentry.disable();openPhoto();if(!voice.active)void voice.start();}
 for(const [id,label] of formats){const b=document.createElement('button');b.className='outline format-choice';b.dataset.format=id;b.textContent=label;b.onclick=()=>chooseFormat(id);$('formatGrid').append(b);}
 $('changeFormat').onclick=()=>{stopCamera();format='';show('home');};
 async function openCard(){
@@ -125,7 +123,7 @@ function advance(){
  if(!contactConfirmed)return;
  if(result){$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;$('regeneratePhoto').disabled=attempts>=3;show('review');gameVersion++;return;}
  if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').hidden=generationErrorCode==='RETAKE';$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
- show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, use your researched RPB Law Firm and BPN LegacyCon context: ask one brief optional question about their goals, then listen and tailor a short relevant fact to their answer. Do not recite private details.',true);
+ show('wait');buildGame();voice.note('The guest confirmed photo access details on screen. Let them know the wider backdrop photo is processing. Offer a short, optional conversation while they wait; keep the focus on the photo booth and do not pitch services.',true);
 }
 $('contactForm').onsubmit=e=>{
  e.preventDefault();const phone=phoneValue($('phoneInput').value),email=$('emailInput').value.trim();
@@ -139,7 +137,7 @@ async function approve(){
   const r=await fetch('/api/claim-photo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...contact,id:result.id,claim:result.claim,confirmed:true,likenessApproved:true}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});const d=await r.json();
   if(!r.ok||!d.ok)throw Error(d.error||'Please try confirming again.');
   if(epoch!==version)return;const link=location.origin+'/p/'+result.id;
-  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number, then briefly remind them to post their photo and tag RPB Law Firm and PowerWyze. Thank them. No SMS was sent.',true);
+  $('resultImage').src=resultUrl;$('qrImage').src='/api/qr?text='+encodeURIComponent(link);$('shortLink').textContent=link;$('claimError').textContent='';show('result');voice.note('The QR is ready. Tell the guest to scan it and enter the same phone number to save their photo. Thank them. No SMS was sent.',true);
  }catch(e){if(epoch===version)$('claimError').textContent=e.message;}
  finally{if(epoch===version){claimBusy=false;$('approvePhoto').disabled=false;refreshIdle();}}
 }
@@ -152,7 +150,7 @@ let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm
 $('keyboardToggle').onclick=toggleKeyboard;
 $('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
 $('takePhoto').onclick=takePhoto;
-$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('intro');};
+$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();reset(false);};
 $('regeneratePhoto').onclick=()=>{if(protectedWork()||!source||attempts>=3||screen!=='review')return;result=null;generationError='';generationErrorCode='';show('wait');buildGame();generate();};
 $('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
 $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;
