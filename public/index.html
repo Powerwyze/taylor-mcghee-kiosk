@@ -1,82 +1,15 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#35171e">
-<title>Your Wider Photo · RPB LegacyCon</title>
+<title>LegacyCon Photo Booth · RPB Law Firm</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css">
-<script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
-</head><body>
+<link rel="stylesheet" href="/styles.css"><script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script></head><body>
 <video id="backgroundVideo" class="background-video" autoplay muted loop playsinline preload="auto" poster="/assets/legacycon-background.jpg" aria-hidden="true" tabindex="-1"><source src="/assets/legacycon-background.webm" type="video/webm"><source src="/assets/legacycon-background.mp4" type="video/mp4"></video>
-<div class="shell" id="kiosk" data-screen="home">
-<header class="masthead"><a class="brand" href="/" aria-label="RPB Law Firm photo booth"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"></a><span>LEGACYCON <b>2026</b></span><button class="quiet" id="resetButton">Start over</button></header>
-<div class="layout">
-<aside class="host-panel">
- <div id="hostCaptions" class="captions" role="status" aria-live="polite"></div>
- <div id="face" class="avatar" data-avatar="loading"><canvas id="avatar" aria-label="Blueprint, an animated mahogany gavel with gold accents and expressive eyes"></canvas><img id="avatarFallback" src="/assets/blueprint-fallback.svg" alt="Blueprint: a mahogany and gold gavel with friendly eyes and a sounding block"></div>
- <div class="voice-controls"><button id="voiceButton" class="outline">Talk to AI guide</button><button id="voiceStop" class="quiet" hidden>Use buttons / mute</button><button id="audioResume" class="outline" hidden>Enable voice audio</button></div>
- <button id="sentryButton" class="quiet">Enable AI camera welcome</button><p id="sentryStatus" class="small" role="status"></p>
- <p id="avatarGestureStatus" class="small" role="status"></p><p id="voiceStatus" class="small" role="status"></p>
-
-</aside>
-<main>
-<nav hidden class="steps" aria-label="Your image steps"><span id="step1">01 · Introduce</span><span id="step2">02 · Photo booth</span><span id="step3">03 · Take it with you</span></nav>
-<section id="home" class="screen"><h1 class="visually-hidden">RPB Law Firm LegacyCon Photo Booth Activation</h1><div id="formatGrid" class="format-grid"></div></section>
-<section id="intro" class="screen" hidden><h1>Have a<br><em>business card?</em></h1>
- <button id="scanStart" class="primary">Scan business card</button>
- <button id="skipCard" class="outline">Skip card</button><button id="changeFormat" class="quiet">Back to start</button>
-
-</section>
-<section id="card" class="screen" hidden>
- <h1>Show your card.</h1><p>Hold it inside the guide.</p>
- <div class="camera-frame card-frame" id="cardFrame"><video id="cardVideo" autoplay playsinline muted></video><div class="card-guide"></div></div>
- <p id="cardStatus" role="status"></p><button id="readCard" class="primary">Scan card</button><button id="cardSkip" class="outline">Skip</button>
-</section>
-<section id="camera" class="screen" hidden>
- <p id="cardSummary" role="status"></p>
- <p class="eyebrow" id="selectedRole">YOUR BACKDROP PHOTO</p><h1>Ready?</h1>
- <p>Stand in front of the backdrop. We’ll keep you and your clothes as captured, and extend the background around you.</p>
- <div class="camera-frame" id="photoFrame"><video id="photoVideo" autoplay playsinline muted></video><div class="face-guide"></div><div id="countdown" hidden></div></div>
- <p id="cameraStatus" role="status">Starting camera…</p><button id="takePhoto" class="primary">Take photo</button><button id="cameraBack" class="outline">Back</button>
-</section>
-<section id="contact" class="screen" hidden>
- <h1 id="contactHeading">Confirm your number.</h1><p id="generationStatus" role="status">Expanding your backdrop.</p>
- <form id="contactForm">
- <label for="phoneInput">Mobile number <span>Use this number to unlock your photo.</span></label><input id="phoneInput" type="text" inputmode="tel" maxlength="20" autocomplete="off" required>
- <details id="optionalDetails"><summary>Name, company &amp; email (optional)</summary><div class="contact-extras"><div><label for="nameInput">Name <span>optional</span></label><input id="nameInput" type="text" maxlength="120" autocomplete="off"></div><div><label for="companyInput">Company <span>optional</span></label><input id="companyInput" type="text" maxlength="120" autocomplete="off"></div></div>
- <label for="emailInput">Email <span>optional; no email is sent</span></label><input id="emailInput" type="text" inputmode="email" maxlength="254" autocomplete="off">
- </details>
- <button type="button" class="quiet" id="keyboardToggle">Show touch keyboard</button><div id="keyboard" class="keyboard" hidden></div>
- <p id="contactError" role="alert" class="error"></p><button id="contactConfirm" class="primary" type="submit">Confirm</button>
- </form>
-</section>
-<section id="wait" class="screen" hidden>
- <h1>Creating your wider photo…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
- <div id="logoCube" class="logo-cube">
- <h2>Logo Cube</h2><div class="cube-navigation">
- <button type="button" data-view="up" class="cube-up" aria-label="Show upper side">↑</button>
- <button type="button" data-view="left" class="cube-left" aria-label="Show left side">←</button>
- <div data-cube-view class="cube-view"></div>
- <button type="button" data-view="right" class="cube-right" aria-label="Show right side">→</button>
- <button type="button" data-view="down" class="cube-down" aria-label="Show lower side">↓</button>
- </div>
- <p class="small" data-cube-status role="status"></p>
- <p class="small">Swipe a row or column to turn it. Arrows change your view.</p>
- <div class="cube-controls"><button type="button" data-undo>Undo</button><button type="button" data-shuffle>Reshuffle</button></div>
- </div><button id="editContact" class="quiet">Edit details</button>
-</section>
-<section id="review" class="screen" hidden>
- <h1>Your wider photo.</h1>
- <div class="comparison"><figure><img id="reviewImage" alt="Your image for review"></figure></div>
- <p id="photoNotice" role="status"></p><p id="claimError" role="alert" class="error"></p>
- <button id="approvePhoto" class="primary">Yes · Get QR</button><button id="regeneratePhoto" class="outline">Try another version</button><button id="retakePhoto" class="outline">Retake</button><button id="reviewContact" class="quiet">Edit number</button>
-</section>
-<section id="result" class="screen" hidden>
- <h1>All yours.</h1><div class="takeaway"><img id="resultImage" alt="Your expanded photo"><div><img id="qrImage" class="qr" alt="Scan to open your image"><p>Scan and enter the <strong>same number</strong> to save.</p><p id="shortLink" class="small"></p></div></div>
- <p>Post your photo and tag RPB Law Firm and PowerWyze!</p>
- <button id="doneButton" class="primary">Done</button>
-</section>
-<section id="errorScreen" class="screen" hidden><h1>Let’s try again.</h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry</button><button id="errorRetake" class="outline">Retake</button></section>
-</main></div>
-<footer><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><details class="booth-options"><summary>Booth options</summary><p>Guests use the photo booth camera, review their wider photo, then scan a QR to save it. Blueprint is an AI guide, not legal advice.</p></details></footer>
-</div><audio id="voiceAudio" autoplay></audio><video id="sentryVideo" autoplay muted playsinline hidden></video>
-<script type="module" src="/background-video.js"></script>
-<script type="module" src="/app.js"></script></body></html>
+<div class="shell" id="kiosk" data-screen="home"><header class="masthead"><a class="brand" href="/" aria-label="RPB Law Firm photo booth"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"></a><span>LEGACYCON <b>2026</b></span><button class="quiet" id="resetButton">Start over</button></header>
+<div class="layout"><aside class="host-panel"><div id="hostCaptions" class="captions" role="status" aria-live="polite"></div><div id="face" class="avatar" data-avatar="loading"><canvas id="avatar" aria-label="Blueprint, an animated mahogany gavel with gold accents and expressive eyes"></canvas><img id="avatarFallback" src="/assets/blueprint-fallback.svg" alt="Blueprint, the photo booth AI guide"></div><div class="voice-controls"><button id="voiceButton" class="outline">Talk to AI guide</button><button id="voiceStop" class="quiet" hidden>Use buttons / mute</button><button id="audioResume" class="outline" hidden>Enable voice audio</button></div><button id="sentryButton" class="quiet">Enable AI camera welcome</button><p id="sentryStatus" class="small" role="status"></p><p id="avatarGestureStatus" class="small" role="status"></p><p id="voiceStatus" class="small" role="status"></p></aside>
+<main><section id="home" class="screen"><h1 class="visually-hidden">RPB Law Firm LegacyCon Photo Booth Activation</h1><div id="formatGrid" class="format-grid"></div></section>
+<section id="camera" class="screen" hidden><p class="eyebrow">YOUR PHOTO BOOTH</p><h1>Bring the whole backdrop into frame.</h1><p>Stand in front of the backdrop. We’ll keep you and your clothes exactly as captured, then extend the wall around you.</p><div class="camera-frame" id="photoFrame"><video id="photoVideo" autoplay playsinline muted></video><div id="countdown" hidden></div></div><p id="cameraStatus" role="status">Starting camera…</p><button id="takePhoto" class="primary">Take photo</button><button id="cameraBack" class="outline">Back to start</button></section>
+<section id="wait" class="screen" hidden><h1>Expanding your backdrop…</h1><p id="waitStatus" role="status">Making your wider photo.</p><div class="progress" aria-hidden="true"><span></span></div><div id="legalMemory" class="legal-memory"><div class="memory-heading"><h2>Legacy Match</h2><span class="small">Find the pairs</span></div><div class="memory-grid" data-memory-grid aria-label="Legacy memory cards"></div><div class="memory-footer"><p data-memory-status role="status"></p><button type="button" data-memory-reset>New game</button></div></div></section>
+<section id="review" class="screen" hidden><h1>Your wider photo.</h1><div class="comparison"><figure><img id="reviewImage" alt="Your expanded photo for review"></figure></div><p id="photoNotice" role="status"></p><p id="claimError" role="alert" class="error"></p><button id="approvePhoto" class="primary">Looks good · Get QR</button><button id="regeneratePhoto" class="outline">Try another version</button><button id="retakePhoto" class="outline">Retake photo</button></section>
+<section id="result" class="screen" hidden><h1>Your photo is ready.</h1><div class="takeaway"><img id="resultImage" alt="Your expanded backdrop photo"><div class="qr-panel"><img id="qrImage" class="qr" alt="Scan to open and download your photo"><p>Scan to open your photo on your phone.</p><a id="downloadPhoto" class="download-button" href="#" download="legacycon-photo.jpg">Download photo here</a></div></div><p id="shortLink" class="small"></p><button id="doneButton" class="primary">Done</button></section>
+<section id="errorScreen" class="screen" hidden><h1>Let’s try again.</h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry expansion</button><button id="errorRetake" class="outline">Retake photo</button></section></main></div>
+<footer><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><details class="booth-options"><summary>Booth options</summary><p>Guests review their wider photo before opening its QR and download link. Blueprint is an AI guide, not legal advice.</p></details></footer></div><audio id="voiceAudio" autoplay></audio><video id="sentryVideo" autoplay muted playsinline hidden></video><script type="module" src="/background-video.js"></script><script type="module" src="/app.js"></script></body></html>
