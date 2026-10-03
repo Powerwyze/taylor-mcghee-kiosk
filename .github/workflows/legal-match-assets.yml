@@ -1,0 +1,30 @@
+name: Render legal match icons
+on:
+  push:
+    branches: [legacycon-2026]
+    paths: [scripts/create-legal-match.py, .github/workflows/legal-match-assets.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: legacycon-2026
+      - run: sudo apt-get update -qq && sudo apt-get install -y blender
+      - run: blender --background --python-exit-code 1 --python scripts/create-legal-match.py
+      - name: Save rendered artwork
+        run: |
+          git config user.name 'PowerWyze build'
+          git config user.email 'actions@users.noreply.github.com'
+          git add public/assets/legal-match
+          git commit -m "Render standalone 3D legal match icons"
+          git pull --rebase origin legacycon-2026
+          git push origin HEAD:legacycon-2026
+      - uses: actions/upload-artifact@v4
+        with:
+          name: legal-match-art
+          path: public/assets/legal-match/
