@@ -53,3 +53,8 @@ Reviewed app source: ad050e361ae08513400f58105bb2f40261de8f0e; preview deploymen
 
 ## Gavel revision
 The user requested a gavel in place of the book on October 2. Blueprint keeps its name, GPT-Live 1 voice, jawOpen/mouthRound audio-driven morphs and all headshot/card/QR/phone behavior. Only character geometry, fallback artwork, accessible descriptions and host appearance instructions changed. Previous production rollback: dpl_Aqq3veR7qTiSywinX7Gfo8WctnjG.
+
+## Format-first generation — October 2 user request
+First ask LinkedIn banner / Profile picture / Headshot, by voice or touch, before card scanning. Then optional card, seven style choices, camera, concurrent contact confirmation, image review, QR and matching phone. The type is included in the generation request and stored as type:role. Reset clears it; format-specific review layout follows it.
+Banner: 1584×396 final, 1536×1024 provider canvas with the entire portrait composed inside the central 4:1 strip on the right. Profile: 1024 square with circular-crop padding. Headshot: 1024×1536 vertical. Final cropping precedes the independent likeness/composition check. Rejected edits use the complete original frame fitted into the selected canvas, with an honest fallback notice. Clean exports omit the sponsor footer so output aspect ratios and platform use remain correct; event branding remains in the kiosk UI.
+LinkedIn banner dimensions reference: https://www.linkedin.com/help/linkedin/answer/a549049 (checked October 2). All three format sizes, fallback sizes and provider payloads are covered remotely; touch checks exercise all three types. Rollback before this change: dpl_DXE8oig8DbEFLoVFTCPjfReXRJja.
