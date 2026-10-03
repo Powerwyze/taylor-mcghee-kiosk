@@ -19,11 +19,11 @@ const roles=[
 let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
 let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',generationErrorCode='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
 const idle=new GuestIdle({onIdle:()=>reset(false)});
-function protectedWork(){return captureBusy||generating||claimBusy||!!cardController;}
+function protectedWork(){return captureBusy||generating||claimBusy||!!cardController||$('nfcDialog').open;}
 function refreshIdle(){idle.setBusy(protectedWork());}
 function snapshot(){return {screen,format,category:role,soloHeadshot:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
 function notify(speak=false){voice.note('Authoritative app state: '+JSON.stringify(snapshot()),speak);}
-function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen=name;$('kiosk').dataset.screen=name;$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
+function show(name){if($('nfcDialog').open)$('nfcDialog').close();if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen=name;$('kiosk').dataset.screen=name;$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
  ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','intro','card'].includes(name)?0:['category','camera'].includes(name)?1:2)));
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
@@ -44,7 +44,7 @@ const voice=new BlueprintVoice({
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
  }
 });
-const sentry=new CameraSentry({video:$('sentryVideo'),canGreet:()=>screen==='home'&&!voice.active,onVisitor:async (greeting,isCurrent)=>{if(screen==='home'){await voice.start(greeting,()=>screen==='home'&&isCurrent());idle.start(30000);refreshIdle();}},onStatus:(state,message)=>{$('sentryStatus').textContent=message||(state==='watching'?'Camera welcome is watching for a visitor.':state==='off'?'Camera welcome is off.':'Preparing camera welcome…');$('sentryButton').textContent=state==='off'?'Enable camera welcome':'Stop camera welcome';}});
+const sentry=new CameraSentry({video:$('sentryVideo'),canGreet:()=>screen==='home'&&!voice.active&&!$('nfcDialog').open,onVisitor:async (greeting,isCurrent)=>{if(screen==='home'){await voice.start(greeting,()=>screen==='home'&&isCurrent());idle.start(30000);refreshIdle();}},onStatus:(state,message)=>{$('sentryStatus').textContent=message||(state==='watching'?'Camera welcome is watching for a visitor.':state==='off'?'Camera welcome is off.':'Preparing camera welcome…');$('sentryButton').textContent=state==='off'?'Enable camera welcome':'Stop camera welcome';}});
 function stopCamera(){cameraController?.abort();cameraController=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;for(const id of ['photoVideo','cardVideo'])$(id).srcObject=null;}
 function reset(manual=true){cancelAvatarHold();$('avatarGestureStatus').textContent='';
  version++;controller.abort();controller=new AbortController();cardController?.abort();cardController=null;
@@ -194,3 +194,8 @@ document.addEventListener('pointerdown',()=>idle.touch());document.addEventListe
 document.addEventListener('visibilitychange',()=>{if(document.hidden){sentry.disable();sentryEnabledByOperator=false;reset(true);idle.stop();}});
 window.addEventListener('pagehide',()=>{sentry.disable();reset(true);idle.stop();});
 idle.start(150000);show('home');$('hostCaptions').textContent='';
+
+const nfcDialog=$('nfcDialog');
+$('freeNfcButton').onclick=()=>{if(!nfcDialog.open){nfcDialog.showModal();idle.touch();refreshIdle();}};
+$('closeNfc').onclick=()=>nfcDialog.close();
+nfcDialog.addEventListener('close',()=>{idle.touch();refreshIdle();});

@@ -71,7 +71,14 @@
 </section>
 <section id="errorScreen" class="screen" hidden><h1>Let’s try again.</h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry</button><button id="errorRetake" class="outline">Retake</button></section>
 </main></div>
-<footer><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><details class="booth-options"><summary>Booth options</summary> <button id="sentryButton" class="quiet">Enable camera welcome</button><p id="sentryStatus" class="small" role="status"></p><p>Card scanning is optional. Card images aren’t saved. Confirm your details before use. Delivery is by QR. Blueprint is an original AI guide, not legal advice.</p></details></footer>
-</div><audio id="voiceAudio" autoplay></audio><video id="sentryVideo" autoplay muted playsinline hidden></video>
+<footer><button type="button" id="freeNfcButton" class="outline nfc-button">Free NFC business card</button><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><details class="booth-options"><summary>Booth options</summary> <button id="sentryButton" class="quiet">Enable camera welcome</button><p id="sentryStatus" class="small" role="status"></p><p>Card scanning is optional. Card images aren’t saved. Confirm your details before use. Delivery is by QR. Blueprint is an original AI guide, not legal advice.</p></details></footer>
+</div>
+<dialog id="nfcDialog" class="nfc-dialog" aria-labelledby="nfcTitle">
+ <button type="button" id="closeNfc" class="nfc-close" aria-label="Close QR code" autofocus>×</button>
+ <h2 id="nfcTitle">Free NFC business card</h2>
+ <img src="/assets/free-nfc-business-card-qr.jpg" width="1280" height="1280" alt="Scan this QR code for your free NFC business card">
+ <p>Scan with your phone</p>
+</dialog>
+<audio id="voiceAudio" autoplay></audio><video id="sentryVideo" autoplay muted playsinline hidden></video>
 <script type="module" src="/background-video.js"></script>
 <script type="module" src="/app.js"></script></body></html>

@@ -10,6 +10,13 @@ try{
  await page.route('**/api/claim-photo',r=>{claims++;const d=r.request().postDataJSON();assert.equal(d.phone,'2025550123');assert.equal(d.confirmed,true);assert.equal(d.likenessApproved,true);return r.fulfill({json:{ok:true,path:'/p/mockphoto1234'}});});
  await page.route('**/api/qr?**',r=>r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')}));
  await page.goto('http://localhost:4173');await page.waitForFunction(()=>document.getElementById('backgroundVideo').currentTime>0,null,{timeout:20000});assert.equal(await page.locator('#backgroundVideo').evaluate(v=>v.muted&&v.loop&&v.playsInline&&v.volume===0),true,'background plays silently inline and loops');await page.screenshot({path:'artifacts/portrait-home.png',fullPage:true});
+
+ await page.locator('#freeNfcButton').click();assert.equal(await page.locator('#nfcDialog').evaluate(d=>d.open),true);
+ await page.waitForFunction(()=>document.querySelector('#nfcDialog img').naturalWidth===1280);
+ await page.setViewportSize({width:390,height:844});await page.screenshot({path:'artifacts/mobile-nfc-qr.png',fullPage:true});
+ await page.locator('#closeNfc').click();assert.equal(await page.locator('#nfcDialog').evaluate(d=>d.open),false);
+ await page.locator('#freeNfcButton').click();await page.keyboard.press('Escape');assert.equal(await page.locator('#nfcDialog').evaluate(d=>d.open),false);
+ assert.equal(await page.locator('#kiosk').getAttribute('data-screen'),'home');await page.setViewportSize({width:1080,height:1920});
  const face=await page.locator('#face').boundingBox();await page.mouse.move(face.x+face.width/2,face.y+face.height/2);await page.mouse.down();await page.waitForTimeout(1100);await page.mouse.up();await page.waitForFunction(()=>document.getElementById('avatarGestureStatus').textContent==='Camera welcome on.');await page.mouse.down();await page.waitForTimeout(1100);await page.mouse.up();assert.equal(await page.locator('#avatarGestureStatus').textContent(),'Camera welcome off.');assert.equal(await page.locator('#formatGrid button').count(),3);assert.equal(await page.locator('#scanStart').isVisible(),false);await page.locator('[data-format=headshot].format-choice').click();await page.locator('#scanStart').click();await page.waitForFunction(()=>!document.getElementById('readCard').disabled);await page.locator('#readCard').click();
  await page.locator('#roleGrid').waitFor({state:'visible'});assert.equal(await page.locator('.role-card').count(),7);
  await page.locator('[data-role=entrepreneur]').click();await page.waitForFunction(()=>!document.getElementById('takePhoto').disabled);

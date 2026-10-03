@@ -76,3 +76,13 @@ body{background:#1c1016 url("/assets/legacycon-background.jpg") center / cover f
 @media(prefers-reduced-motion:reduce){.memory-turn{transition:none}}
 
 .memory-back img{background:#fbeed2;padding:5px;box-shadow:0 3px 9px #0004}
+
+.nfc-button{min-height:52px;padding:12px 20px;white-space:normal}
+.nfc-dialog{position:fixed;inset:0;width:min(92vw,540px);max-height:92dvh;margin:auto;padding:52px 22px 20px;border:1px solid #d9b16d;border-radius:22px;background:#fffaf0;color:#35171e;box-shadow:0 24px 90px #0009;overflow:auto}
+.nfc-dialog::backdrop{background:#100b12d9;backdrop-filter:blur(5px)}
+.nfc-dialog h2{text-align:center;font-size:clamp(22px,5vw,30px);margin:0 0 14px}
+.nfc-dialog img{display:block;width:100%;height:auto;max-height:65dvh;object-fit:contain;background:white;border-radius:6px}
+.nfc-dialog p{text-align:center;font-size:16px;margin:12px 0 0}
+.nfc-close{position:absolute;top:7px;right:9px;width:44px;height:44px;min-height:44px;padding:0;border:0;background:transparent;color:#35171e;font-size:32px;line-height:1}
+.nfc-close:focus-visible{outline:2px solid #8c6324;outline-offset:0}
+@media(max-width:600px){footer{flex-wrap:wrap}.nfc-button{width:100%}.nfc-dialog{padding:50px 14px 18px}}
