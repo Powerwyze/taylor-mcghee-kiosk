@@ -31,7 +31,6 @@ const voice=new BlueprintVoice({
   if(name==='choose_format'&&screen==='home'&&formats.some(f=>f[0]===args.format)){chooseFormat(args.format);return snapshot();}
   if(name==='skip_card'&&['intro','card'].includes(screen)){skipCard();return snapshot();}
   if(name==='open_card_camera'&&screen==='intro'){openCard();return {accepted:true};}
-  if(name==='choose_category'&&screen==='category'&&roles.some(r=>r[0]===args.category)){chooseRole(args.category);return {accepted:true};}
   if(name==='take_photo'&&screen==='camera'&&args.confirmed===true&&!captureBusy&&cameraStream){takePhoto();return {accepted:true};}
   return {error:'That action is unavailable at this step. Use the visible touch controls; phone and likeness confirmation always require a tap.'};
  }
@@ -153,7 +152,7 @@ let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm
 $('keyboardToggle').onclick=toggleKeyboard;
 $('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
 $('takePhoto').onclick=takePhoto;
-$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();openPhoto();};
+$('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('intro');};
 $('regeneratePhoto').onclick=()=>{if(protectedWork()||!source||attempts>=3||screen!=='review')return;result=null;generationError='';generationErrorCode='';show('wait');buildGame();generate();};
 $('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
 $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;
