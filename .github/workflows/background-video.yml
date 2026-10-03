@@ -1,0 +1,32 @@
+name: Prepare silent background video
+on:
+  push:
+    branches: [legacycon-2026]
+    paths: ['.github/workflows/background-video.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: legacycon-2026
+      - run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
+      - name: Encode silent browser formats
+        run: |
+          ffprobe -v error -show_entries stream=codec_name,width,height,codec_type -of json public/assets/legacycon-background.mp4
+          cp public/assets/legacycon-background.mp4 /tmp/background-source.mp4
+          ffmpeg -y -i /tmp/background-source.mp4 -an -vf "scale='min(1280,iw)':-2" -c:v libx264 -preset fast -crf 24 -pix_fmt yuv420p -movflags +faststart public/assets/legacycon-background.mp4
+          ffmpeg -y -i /tmp/background-source.mp4 -an -vf "scale='min(1280,iw)':-2" -c:v libvpx-vp9 -b:v 0 -crf 34 -row-mt 1 public/assets/legacycon-background.webm
+          ffmpeg -y -i /tmp/background-source.mp4 -frames:v 1 -update 1 public/assets/legacycon-background.jpg
+          test -z "$(ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 public/assets/legacycon-background.mp4)"
+          test -z "$(ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 public/assets/legacycon-background.webm)"
+      - name: Save processed media
+        run: |
+          git config user.name "PowerWyze Media"
+          git config user.email "bryan.stewart@powerwyze.com"
+          git add public/assets/legacycon-background.*
+          git commit -m "Encode silent background video and poster remotely"
+          git push origin HEAD:legacycon-2026
