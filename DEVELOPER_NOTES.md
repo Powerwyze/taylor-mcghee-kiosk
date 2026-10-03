@@ -1,6 +1,6 @@
 # Current image-generation behavior — October 2 correction
 The user reported that the flat original-photo fallback did nothing. Do not silently replace generated edits with this fallback. The dedicated portrait pipeline now uses OPENAI_PORTRAIT_MODEL (default gpt-image-2) through the existing Vercel OPENAI_API_KEY, retaining quota-only OPENAI_BACKUP. No credentials were retrieved or replaced. The old OPENAI_IMAGE_MODEL remains for legacy endpoints.
-GPT Image 2 uses automatic high input fidelity; omit the unsupported input_fidelity parameter. Banner generation uses 1584×528, then a central 1584×396 crop; the prompt protects the full portrait within the middle 75%. Other format dimensions remain unchanged.
+GPT Image 2 uses automatic high input fidelity; omit the unsupported input_fidelity parameter. Banner generation uses 1584×528. The full generated frame is scaled to 1188×396 and right-aligned, then its quiet left background is extended with a mirrored 396px panel to produce 1584×396 without cropping the portrait. The prompt requires the whole head with generous margin. Other format dimensions remain unchanged.
 Independent review returns separate appearance and composition findings. A consistent, well-framed result is ai-checked; uncertain/changed appearance or composition concerns are ai-review with an explicit guest-facing review notice. Both contain the actual generated pixels and still require the guest to approve likeness on screen. Never describe ai-review as likeness-verified. Try another version is an explicit guest action within the existing three-attempt limit. If generation or review fails, return an actionable error, not an original-photo success. Logs include safe stage/status enums only, never images, contacts or secrets.
 This supersedes the earlier fallback behavior described in the historical notes below. Rollback before the fix: dpl_H4xBG2EdoCAyTfamRqeirp8oiNtc.
 
@@ -11,7 +11,7 @@ Repository Powerwyze/taylor-mcghee-kiosk, branch legacycon-2026, project rpb-leg
 Rollback: previously promoted deployment dpl_HkBUJN48SYwRBeqRLU59AP3X73Ww (verify ID before rollback).
 
 ## Guest flow
-Optional business card scan -> explicit category -> solo camera readiness -> five-second local countdown -> generation immediately, concurrent contact review -> memory game only if still generating -> original/result comparison -> touch likeness approval -> confirmed phone binding -> QR -> existing phone confirmation/download.
+Choose LinkedIn banner, Profile picture or Headshot -> optional business card scan -> explicit category -> solo camera readiness -> five-second local countdown -> generation immediately, concurrent contact review -> memory game only if still generating -> original/result comparison -> touch likeness approval -> confirmed phone binding -> QR -> existing phone confirmation/download.
 
 Roles: Entrepreneur, Tech enthusiast, VC, Law firm, Blue collar, Executive, Community leader. A role changes backdrop and restrained light, not facial features, actual clothing or inferred occupation. Guest selects it explicitly; it is not inferred from appearance or card.
 
@@ -65,3 +65,6 @@ First ask LinkedIn banner / Profile picture / Headshot, by voice or touch, befor
 Banner: 1584×396 final, 1536×1024 provider canvas with the entire portrait composed inside the central 4:1 strip on the right. Profile: 1024 square with circular-crop padding. Headshot: 1024×1536 vertical. Final cropping precedes the independent likeness/composition check. Rejected edits use the complete original frame fitted into the selected canvas, with an honest fallback notice. Clean exports omit the sponsor footer so output aspect ratios and platform use remain correct; event branding remains in the kiosk UI.
 LinkedIn banner dimensions reference: https://www.linkedin.com/help/linkedin/answer/a549049 (checked October 2). All three format sizes, fallback sizes and provider payloads are covered remotely; touch checks exercise all three types. Rollback before this change: dpl_DXE8oig8DbEFLoVFTCPjfReXRJja.
 
+
+## Final generation fix verification
+Remote regression run 37090831793 and live run 37090869565 passed. The latter confirmed gpt-image-2 generated pixels, appearance consistent, composition review (guest review remains required), 1584×396 output, GPT-Live audio/captions, card OCR, likeness confirmation and correct/wrong-phone QR retrieval. The actual output was visually inspected: full head retained, generated studio background, no original-photo flat fallback. Reviewed app source 83bcce1ca1886136929d95abe1d889ca3a4df2c4; preview dpl_RKxSiW4j5X2ftPKaVzJzJBguEDrJ. Production promotion dpl_6NZ8VTtdpXsdZTQx3wa5t7Pmb1Vo. Existing saved QR images do not change; refresh and capture a new photo to use the fix.
