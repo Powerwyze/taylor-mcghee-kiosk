@@ -41,7 +41,7 @@ module.exports = async function handler(req, res) {
     cardConfigured: Boolean(process.env.OPENAI_API_KEY),
     email: emailReady(),
     storage: storageKind(),
-    model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
+    model: require("../lib/headshot").imageModel(),
     quality: "high",
     inputFidelity: "high",
     size: "1024x1536",

@@ -132,7 +132,7 @@ async function generate(){
 function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]==='1')n=n.slice(1);return /^[2-9]\d{2}[2-9]\d{6}$/.test(n)?n:'';}
 function advance(){
  if(!contactConfirmed)return;
- if(result){$('sourceImage').src=sourceUrl;$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;show('review');gameVersion++;return;}
+ if(result){$('sourceImage').src=sourceUrl;$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;$('regeneratePhoto').disabled=attempts>=3;show('review');gameVersion++;return;}
  if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
  show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, offer one brief optional question and listen. Do not recite private details.',true);
 }
@@ -169,6 +169,7 @@ $('keyboardToggle').onclick=toggleKeyboard;
 $('scanStart').onclick=openCard;$('skipCard').onclick=skipCard;$('cardSkip').onclick=skipCard;$('readCard').onclick=readCard;
 $('categoryBack').onclick=()=>show('intro');$('takePhoto').onclick=takeHeadshot;
 $('cameraBack').onclick=()=>{stopCamera();captureBusy=false;voice.quiet(false);refreshIdle();show('category');};
+$('regeneratePhoto').onclick=()=>{if(protectedWork()||!source||attempts>=3||screen!=='review')return;result=null;generationError='';show('wait');buildGame();generate();};
 $('approvePhoto').onclick=approve;$('retakePhoto').onclick=retake;$('errorRetake').onclick=retake;
 $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;
 $('retryPhoto').onclick=()=>{if(generating||attempts>=3)return;generationError='';show('wait');buildGame();generate();};
