@@ -19,7 +19,7 @@ module.exports = async function handler(req, res) {
   let fresh = false;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     meta = token ? await loadMeta(id) : null;
-    fresh = Boolean(meta && meta.tokenExp > Date.now() && sameHex(hashToken(token), meta.tokenHash || ""));
+    fresh = Boolean(meta && ((meta.approvedAt && meta.viewHash && sameHex(hashToken(token),meta.viewHash)) || (meta.tokenExp > Date.now() && sameHex(hashToken(token),meta.tokenHash || ""))));
     if (fresh || !token) break;
     await new Promise((resolve) => setTimeout(resolve, 300));
   }
@@ -36,7 +36,7 @@ module.exports = async function handler(req, res) {
     res.statusCode = 200;
     res.setHeader("Content-Type", "image/jpeg");
     res.setHeader("Cache-Control", "private, no-store");
-    res.setHeader("Content-Disposition", "inline; filename=\"rpb-legacy-portrait.jpg\"");
+    res.setHeader("Content-Disposition", (param(req,"download")==="1"?"attachment":"inline")+"; filename=\"legacycon-photo.jpg\"");
     return res.end(image);
   } catch (error) {
     console.error("image read failed", error.message || "read");
