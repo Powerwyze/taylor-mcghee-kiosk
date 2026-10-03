@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#35171e">
+<title>Your Next Look · RPB LegacyCon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+<script type="importmap">{"imports":{"three":"/vendor/three/three.module.min.js","three/addons/":"/vendor/three/addons/"}}</script>
+</head><body>
+<video id="backgroundVideo" class="background-video" autoplay muted loop playsinline preload="auto" poster="/assets/legacycon-background.jpg" aria-hidden="true" tabindex="-1"><source src="/assets/legacycon-background.webm" type="video/webm"><source src="/assets/legacycon-background.mp4" type="video/mp4"></video>
+<div class="shell" id="kiosk" data-screen="home">
+<header class="masthead"><a class="brand" href="/" aria-label="RPB Law Firm headshots"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"></a><span>LEGACYCON <b>2026</b></span><button class="quiet" id="resetButton">Start over</button></header>
+<div class="layout">
+<aside class="host-panel">
+ <div id="hostCaptions" class="captions" role="status" aria-live="polite"></div>
+ <div id="face" class="avatar" data-avatar="loading"><canvas id="avatar" aria-label="Blueprint, an animated mahogany gavel with gold accents and expressive eyes"></canvas><img id="avatarFallback" src="/assets/blueprint-fallback.svg" alt="Blueprint: a mahogany and gold gavel with friendly eyes and a sounding block"></div>
+ <div class="voice-controls"><button id="voiceButton" class="outline">Talk to me</button><button id="voiceStop" class="quiet" hidden>Use buttons / mute</button><button id="audioResume" class="outline" hidden>Enable voice audio</button></div>
+ <p id="avatarGestureStatus" class="small" role="status"></p><p id="voiceStatus" class="small" role="status"></p>
+
+</aside>
+<main>
+<nav hidden class="steps" aria-label="Your image steps"><span id="step1">01 · Introduce</span><span id="step2">02 · Headshot</span><span id="step3">03 · Take it with you</span></nav>
+<section id="home" class="screen"><h1>What are<br><em>we making?</em></h1><div id="formatGrid" class="format-grid"></div></section>
+<section id="intro" class="screen" hidden><h1>Have a<br><em>business card?</em></h1>
+ <button id="scanStart" class="primary">Scan business card</button>
+ <button id="skipCard" class="outline">Skip card</button><button id="changeFormat" class="quiet">Change image type</button>
+
+</section>
+<section id="card" class="screen" hidden>
+ <h1>Show your card.</h1><p>Hold it inside the guide.</p>
+ <div class="camera-frame card-frame" id="cardFrame"><video id="cardVideo" autoplay playsinline muted></video><div class="card-guide"></div></div>
+ <p id="cardStatus" role="status"></p><button id="readCard" class="primary">Scan card</button><button id="cardSkip" class="outline">Skip</button>
+</section>
+<section id="category" class="screen" hidden>
+ <h1>Choose your style.</h1><p id="cardSummary" role="status"></p>
+ <div id="roleGrid" class="role-grid"></div><button id="categoryBack" class="quiet">Back</button>
+</section>
+<section id="camera" class="screen" hidden>
+ <p class="eyebrow" id="selectedRole">YOUR HEADSHOT</p><h1>Ready?</h1>
+ <p>One person. Face and shoulders in the guide.</p>
+ <div class="camera-frame" id="photoFrame"><video id="photoVideo" autoplay playsinline muted></video><div class="face-guide"></div><div id="countdown" hidden></div></div>
+ <p id="cameraStatus" role="status">Starting camera…</p><button id="takePhoto" class="primary">Take photo</button><button id="cameraBack" class="outline">Change style</button>
+</section>
+<section id="contact" class="screen" hidden>
+ <h1 id="contactHeading">Confirm your number.</h1><p id="generationStatus" role="status">Your photo is generating.</p>
+ <form id="contactForm">
+ <label for="phoneInput">Mobile number <span>Use this number to unlock your photo.</span></label><input id="phoneInput" type="text" inputmode="tel" maxlength="20" autocomplete="off" required>
+ <details id="optionalDetails"><summary>Name, company &amp; email (optional)</summary><div class="contact-extras"><div><label for="nameInput">Name <span>optional</span></label><input id="nameInput" type="text" maxlength="120" autocomplete="off"></div><div><label for="companyInput">Company <span>optional</span></label><input id="companyInput" type="text" maxlength="120" autocomplete="off"></div></div>
+ <label for="emailInput">Email <span>optional; no email is sent</span></label><input id="emailInput" type="text" inputmode="email" maxlength="254" autocomplete="off">
+ </details>
+ <button type="button" class="quiet" id="keyboardToggle">Show touch keyboard</button><div id="keyboard" class="keyboard" hidden></div>
+ <p id="contactError" role="alert" class="error"></p><button id="contactConfirm" class="primary" type="submit">Confirm</button>
+ </form>
+</section>
+<section id="wait" class="screen" hidden>
+ <h1>Creating your image…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
+ <div id="legalMatch" class="legal-match">
+ <div class="match-heading"><div><span class="match-eyebrow">RPB LAW FIRM</span><h2>Case Crush</h2></div><div class="match-score"><span>Score</span><strong data-match-score>0</strong></div></div>
+ <div data-match-grid class="match-grid" aria-label="Legal match-three board"></div>
+ <p data-match-status class="match-status" role="status">Swipe neighbors. Match three.</p>
+ <div class="match-actions"><button type="button" data-match-hint>Hint</button><button type="button" data-match-reset>New game</button></div>
+ </div><button id="editContact" class="quiet">Edit details</button>
+</section>
+<section id="review" class="screen" hidden>
+ <h1>Your professional look.</h1>
+ <div class="comparison"><figure><img id="reviewImage" alt="Your image for review"></figure></div>
+ <p id="photoNotice" role="status"></p><p id="claimError" role="alert" class="error"></p>
+ <button id="approvePhoto" class="primary">Yes · Get QR</button><button id="regeneratePhoto" class="outline">Try another version</button><button id="retakePhoto" class="outline">Retake</button><button id="reviewContact" class="quiet">Edit number</button>
+</section>
+<section id="result" class="screen" hidden>
+ <h1>All yours.</h1><div class="takeaway"><img id="resultImage" alt="Your approved headshot"><div><img id="qrImage" class="qr" alt="Scan to open your image"><p>Scan and enter the <strong>same number</strong> to save.</p><p id="shortLink" class="small"></p></div></div>
+ <p>Post your photo and tag RPB Law Firm and PowerWyze!</p>
+ <button id="doneButton" class="primary">Done</button>
+</section>
+<section id="errorScreen" class="screen" hidden><h1 id="errorHeading">Photo not ready.</h1><p id="errorMessage" role="alert"></p><button id="retryPhoto" class="primary">Retry</button><button id="errorRetake" class="outline">Retake</button></section>
+</main></div>
+<footer><button type="button" id="freeNfcButton" class="outline nfc-button">Free NFC business card</button><div class="partner-logos"><img src="/assets/logos/rpb.png" alt="RPB Law Firm"><img src="/assets/logos/bpn.png" alt="Black Professionals Network"><img src="/assets/logos/powerwyze.png" alt="PowerWyze"></div><details class="booth-options"><summary>Booth options</summary> <button id="sentryButton" class="quiet">Enable camera welcome</button><p id="sentryStatus" class="small" role="status"></p><p>Card scanning is optional. Card images aren’t saved. Confirm your details before use. Delivery is by QR. Blueprint is an original AI guide, not legal advice.</p></details></footer>
+</div>
+<dialog id="nfcDialog" class="nfc-dialog" aria-labelledby="nfcTitle">
+ <button type="button" id="closeNfc" class="nfc-close" aria-label="Close QR code" autofocus>×</button>
+ <h2 id="nfcTitle">Free NFC business card</h2>
+ <img src="/assets/free-nfc-business-card-qr.jpg" width="1280" height="1280" alt="Scan this QR code for your free NFC business card">
+ <p>Scan with your phone</p>
+</dialog>
+<audio id="voiceAudio" autoplay></audio><video id="sentryVideo" autoplay muted playsinline hidden></video>
+<script type="module" src="/background-video.js"></script>
+<script type="module" src="/app.js"></script></body></html>

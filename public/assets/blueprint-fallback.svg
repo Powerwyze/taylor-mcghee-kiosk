@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 380" role="img" aria-label="Blueprint, an expressive mahogany and gold gavel">
+<defs><linearGradient id="wood" x2="1" y2="1"><stop stop-color="#a1542c"/><stop offset=".55" stop-color="#68321e"/><stop offset="1" stop-color="#3e1d15"/></linearGradient><linearGradient id="gold" x2="1"><stop stop-color="#b17b36"/><stop offset=".5" stop-color="#f2d598"/><stop offset="1" stop-color="#a56f30"/></linearGradient></defs>
+<ellipse cx="160" cy="353" rx="91" ry="14" fill="#130a0b" opacity=".3"/>
+<rect x="83" y="326" width="154" height="24" rx="10" fill="url(#wood)"/><rect x="89" y="320" width="142" height="9" rx="4" fill="url(#gold)"/><ellipse cx="160" cy="319" rx="68" ry="11" fill="#8c4829"/>
+<rect x="146" y="138" width="28" height="174" rx="12" fill="url(#wood)"/><rect x="143" y="150" width="34" height="23" rx="5" fill="url(#gold)"/><rect x="141" y="270" width="38" height="48" rx="13" fill="url(#wood)"/><path d="M142 279h36M142 302h36" stroke="#d9b16d" stroke-width="6"/>
+<rect x="55" y="56" width="210" height="106" rx="28" fill="url(#wood)" stroke="#bd7848" stroke-width="2"/>
+<rect x="43" y="47" width="23" height="126" rx="8" fill="url(#gold)"/><rect x="25" y="42" width="25" height="136" rx="12" fill="url(#wood)"/>
+<rect x="254" y="47" width="23" height="126" rx="8" fill="url(#gold)"/><rect x="270" y="42" width="25" height="136" rx="12" fill="url(#wood)"/>
+<text x="160" y="81" text-anchor="middle" fill="#f1cf90" font-family="Georgia,serif" font-size="17">RPB</text>
+<g fill="#fff2dd"><ellipse cx="127" cy="112" rx="17" ry="22"/><ellipse cx="193" cy="112" rx="17" ry="22"/></g><g fill="#21110d"><ellipse cx="130" cy="114" rx="8" ry="13"/><ellipse cx="196" cy="114" rx="8" ry="13"/></g><g fill="white"><circle cx="132" cy="107" r="3"/><circle cx="198" cy="107" r="3"/></g><ellipse cx="160" cy="145" rx="20" ry="4" fill="#21110d"/>
+<text x="160" y="342" text-anchor="middle" fill="#edcc91" font-family="Georgia,serif" font-size="10" letter-spacing="2">LEGACY</text></svg>

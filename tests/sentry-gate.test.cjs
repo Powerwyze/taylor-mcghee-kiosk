@@ -1,0 +1,4 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const fs=require('node:fs');
+const gate=()=>import('data:text/javascript;base64,'+fs.readFileSync('public/host-sentry-gate.js').toString('base64'));
+test('already present at enable greets after dwell, not a leave/reenter',async()=>{const {PresenceGate}=await gate();const g=new PresenceGate();assert.equal(g.observe(true,100),false);assert.equal(g.observe(true,500),true);assert.equal(g.observe(true,900),false);assert.equal(g.isFresh(1000),true);g.observe(false,1100);assert.equal(g.isFresh(1101),false);});
+test('busy frames do not greet and continuous occupancy rearms after cooldown',async()=>{const {PresenceGate}=await gate();const g=new PresenceGate();g.observe(true,0);assert.equal(g.observe(true,400,{busy:true}),false);assert.equal(g.observe(true,800),true);assert.equal(g.observe(true,31000),true);g.reset();assert.equal(g.isFresh(31000),false);});

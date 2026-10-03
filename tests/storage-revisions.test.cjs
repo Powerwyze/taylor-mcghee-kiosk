@@ -1,0 +1,8 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const Module=require('node:module');
+test('metadata writes immutable revisions so stale original cannot undo a confirmed phone',async()=>{
+const originalLoad=Module._load,originalFetch=global.fetch;const objects=new Map();process.env.BLOB_READ_WRITE_TOKEN='test-only';let revision=0;
+const base={id:'testphoto123',phoneHash:'',imageUrlEnc:'example'};
+Module._load=function(id,...rest){if(id==='@vercel/blob')return {put:async(path,body)=>{objects.set(path,JSON.parse(body));return {url:'https://fixture/'+path};},list:async({prefix})=>({blobs:prefix.startsWith('mv/')?[...objects.keys()].filter(k=>k.startsWith(prefix)).map(pathname=>({pathname,url:'https://fixture/'+pathname})):[{pathname:prefix,url:'https://fixture/'+prefix}],hasMore:false})};return originalLoad.call(this,id,...rest);};
+global.fetch=async url=>({ok:true,json:async()=>objects.get(new URL(url).pathname.slice(1))||base});
+try{delete require.cache[require.resolve('../lib/storage')];const {loadMeta,writeMeta}=require('../lib/storage');assert.equal((await loadMeta(base.id)).phoneHash,'');await writeMeta(base.id,{...base,phoneHash:'confirmed'});assert.equal((await loadMeta(base.id)).phoneHash,'confirmed');assert.equal(objects.has('m/'+base.id+'.json'),false);assert.ok([...objects.keys()][0].startsWith('mv/'+base.id+'/'));}finally{Module._load=originalLoad;global.fetch=originalFetch;delete process.env.BLOB_READ_WRITE_TOKEN;}
+});
