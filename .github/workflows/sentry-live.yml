@@ -1,5 +1,8 @@
 name: Verify sentry welcome
 on:
+  push:
+    branches: [legacycon-2026]
+    paths: [.github/workflows/sentry-live.yml]
   workflow_dispatch:
     inputs:
       kiosk_url:
@@ -20,7 +23,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node tests/sentry-live.mjs
         env:
-          KIOSK_URL: ${{ inputs.kiosk_url }}
+          KIOSK_URL: ${{ inputs.kiosk_url || 'https://rpb-legacycon-kiosk-k36p1kuf1-powerwyzes-projects.vercel.app' }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
