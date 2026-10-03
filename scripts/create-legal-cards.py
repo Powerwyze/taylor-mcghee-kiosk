@@ -66,7 +66,7 @@ def pen():
  bpy.ops.mesh.primitive_cone_add(vertices=48,radius1=.015,radius2=.13,depth=(b-a).length,location=(a+b)/2);o=bpy.context.object;o.rotation_euler=(a-b).to_track_quat('Z','Y').to_euler();o.data.materials.append(gold)
 for name,build in [('gavel',gavel),('scales',scales),('books',books),('court',court),('briefcase',briefcase),('pen',pen)]:
  setup();build()
- scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=40;scene.cycles.use_denoising=True
+ scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.samples=96;scene.cycles.use_denoising=False
  scene.render.resolution_x=640;scene.render.resolution_y=640;scene.render.resolution_percentage=100;scene.render.image_settings.file_format='PNG';scene.render.film_transparent=True
  scene.world.color=(.25,.25,.25)
  for loc,power,size in [((2,-4,6),650,4),((-4,-1,3),450,3),((1,4,5),800,3)]:
