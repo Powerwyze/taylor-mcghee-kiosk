@@ -6,7 +6,7 @@ import {BlueprintVoice} from './blueprint-voice.js';
 import {CameraSentry} from './host-sentry.js';
 const $=id=>document.getElementById(id);
 let stopGame=null;
-const formats=[['expanded','Expand my photo']];
+const formats=[['expanded','Start photo booth']];
 const roles=[];
 let version=0,controller=new AbortController(),cameraController=null,cardController=null,cameraStream=null,captureBusy=false,generating=false,claimBusy=false,attempts=0;
 let screen='home',format='',role='',source=null,sourceUrl='',result=null,resultUrl='',contactConfirmed=false,contact=null,generationError='',generationErrorCode='',keyboardInput=$('phoneInput'),gameVersion=0,sentryEnabledByOperator=false;
@@ -15,7 +15,7 @@ function protectedWork(){return captureBusy||generating||claimBusy||!!cardContro
 function refreshIdle(){idle.setBusy(protectedWork());}
 function snapshot(){return {screen,format,expandedBackdrop:true,photoBooth:true,generating,hasSource:!!source,hasResult:!!result,contactConfirmed,delivery:'QR plus phone confirmation; no SMS',resultType:result?.path||null};}
 function notify(speak=false){voice.note('Authoritative app state: '+JSON.stringify(snapshot()),speak);}
-function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen=name;$('kiosk').dataset.screen=name;$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
+function show(name){if(name!=='wait'&&stopGame){stopGame();stopGame=null;}screen=name;$('kiosk').dataset.screen=name;document.body.classList.toggle('home-screen',name==='home');$('kiosk').dataset.format=format;document.querySelectorAll('main>.screen').forEach(el=>el.hidden=el.id!==name);
  ['step1','step2','step3'].forEach((id,i)=>$(id).classList.toggle('active',i===(['home','intro','card'].includes(name)?0:['camera'].includes(name)?1:2)));
  $('hostCaptions').textContent='';notify(name==='review');window.scrollTo({top:0,behavior:'instant'});
 }
