@@ -115,7 +115,7 @@ async function generate(){
  if(!source||generating||attempts>=3)return;attempts++;const epoch=version;generating=true;generationError='';refreshIdle();notify();
  try{
   const form=new FormData();form.append('image',source,'headshot-source.jpg');form.append('role',role);form.append('format',format);
-  const r=await fetch('/api/headshot',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(175000)])});
+  const r=await fetch('/api/headshot',{method:'POST',body:form,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(235000)])});
   if(!r.ok){const d=await r.json().catch(()=>({}));throw Object.assign(Error(d.error||'The image did not finish.'),{code:d.code});}
   const blob=await r.blob();if(!blob.type.startsWith('image/'))throw Error('No photo returned.');
   const id=r.headers.get('X-Photo-Id'),claim=r.headers.get('X-Claim-Token');
