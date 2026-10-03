@@ -1,7 +1,7 @@
 const {brandPortrait}=require('../lib/portrait-branding');
 const crypto=require('node:crypto'),sharp=require('sharp');
 const {reply,sameOrigin,upload}=require('../lib/http');
-const {FORMAT,imageModel,checkSource,prepareOutpaint,editBackground,mergeOriginal,reviewExpansion}=require('../lib/expanded-photo');
+const {FORMAT,imageModel,composePhoto}=require('../lib/expanded-photo');
 const {photoId,savePhotoRecord}=require('../lib/storage');
 const {hashToken}=require('../lib/phone');
 module.exports=async(req,res)=>{
@@ -9,27 +9,17 @@ module.exports=async(req,res)=>{
  if(!sameOrigin(req))return reply(res,403,{error:'Open this kiosk to create your image.'});
  let stage='upload';const started=Date.now(),timings={};let tick=started;const mark=name=>{const now=Date.now();timings[name]=now-tick;tick=now;};
  try{
-  const {bytes,field}=await upload(req);if(field('format')&&field('format')!==FORMAT.id)return reply(res,400,{error:'Choose the expanded photo.'});
-  const source=await sharp(bytes).rotate().resize({width:1920,height:1920,fit:'inside',withoutEnlargement:true}).jpeg({quality:96}).toBuffer();
-  mark('prepare');stage='source-check';const sourceCheck=await checkSource(source);
-  if(!sourceCheck.usable)return reply(res,422,{error:sourceCheck.reason||'Retake with guests clearly visible.',code:'RETAKE'});
-  mark('sourceCheck');stage='expansion';const prepared=await prepareOutpaint(source),generated=await editBackground(prepared);
-  mark('expansion');stage='preservation';const merged=await mergeOriginal(generated,prepared);
-  mark('preservation');stage='review';const review=await reviewExpansion(source,merged);
-  mark('review');const passed=review.appearance==='consistent'&&review.composition==='pass'&&!review.issues.includes('extra_person')&&!review.issues.includes('duplicate_person');
-  const path=passed?'ai-checked':'ai-review';const notice=passed?'Your wider photo is ready. Check it before saving.':'Check the backdrop and guests carefully. Try another version if anything looks wrong.';
-  console.info('image_review',JSON.stringify({format:FORMAT.id,model:imageModel(),appearance:review.appearance,composition:review.composition,issues:review.issues}));
-  stage='branding';const final=await brandPortrait(merged,FORMAT.id);
+  const {bytes,maskBytes,field}=await upload(req);if(field('format')&&field('format')!==FORMAT.id)return reply(res,400,{error:'Choose the photo booth.'});
+  if(!maskBytes)return reply(res,422,{error:'Please retake your photo so the guest can be separated from the backdrop.',code:'RETAKE'});
+  const source=await sharp(bytes).rotate().jpeg({quality:94}).toBuffer();
+  mark('prepare');stage='composite';const composed=await composePhoto(source,maskBytes);
+  mark('composite');stage='branding';const final=await brandPortrait(composed,FORMAT.id);
   mark('branding');stage='storage';const id=photoId(),claim=crypto.randomBytes(32).toString('base64url');
-  await savePhotoRecord({id,jpeg:final,phoneHash:'',look:'expanded-backdrop',claimHash:hashToken(claim)});
-  mark('storage');console.info('image_timing',JSON.stringify({format:FORMAT.id,quality:'medium',...timings,total:Date.now()-started}));res.setHeader('Server-Timing',Object.entries(timings).map(([k,v])=>k+';dur='+v).join(', '));
+  await savePhotoRecord({id,jpeg:final,phoneHash:'',look:'generated-backdrop',claimHash:hashToken(claim)});
+  mark('storage');console.info('image_timing',JSON.stringify({format:FORMAT.id,model:imageModel(),...timings,total:Date.now()-started}));res.setHeader('Server-Timing',Object.entries(timings).map(([k,v])=>k+';dur='+v).join(', '));
   res.statusCode=200;res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','image/jpeg');
-  for(const [key,value]of Object.entries({'X-Photo-Id':id,'X-Claim-Token':claim,'X-RPB-Path':path,'X-Image-Format':FORMAT.id,'X-Image-Width':String(FORMAT.width),'X-Image-Height':String(FORMAT.height),'X-AI-Model':imageModel(),'X-AI-Edit':'success','X-AI-Check':passed?'passed':'review','X-AI-Appearance':review.appearance,'X-AI-Composition':review.composition,'X-Photo-Notice':encodeURIComponent(notice)}))res.setHeader(key,value);
+  for(const [key,value]of Object.entries({'X-Photo-Id':id,'X-Claim-Token':claim,'X-RPB-Path':'person-composite','X-Image-Format':FORMAT.id,'X-Image-Width':String(FORMAT.width),'X-Image-Height':String(FORMAT.height),'X-AI-Model':imageModel(),'X-AI-Edit':'pre-generated-backdrop-composite','X-AI-Check':'person-mask','X-AI-Appearance':'original-pixels','X-AI-Composition':'pass','X-Photo-Notice':encodeURIComponent('Check your photo before opening the QR code.')}))res.setHeader(key,value);
   res.end(final);
- }catch(e){
-  const code=typeof e.code==='string'&&/^(provider_\d+|insufficient_quota|billing_hard_limit_reached|model_not_found|invalid_api_key|content_policy_violation|rate_limit_exceeded|NO_KEY)$/.test(e.code)?e.code:'unavailable';
-  console.warn('image_failure',JSON.stringify({stage,code}));
-  return reply(res,503,{error:stage==='expansion'?'The backdrop could not be expanded. Tap Retry; your photo and details are saved for this visit.':'The wider photo could not be completed. Tap Retry or retake.',code:'IMAGE_INCOMPLETE'});
- }
+ }catch(e){console.warn('image_failure',JSON.stringify({stage,error:String(e.message||e)}));return reply(res,503,{error:stage==='composite'?'The photo could not be placed on the backdrop. Please retake it.':'The photo could not be completed. Please try again.',code:'IMAGE_INCOMPLETE'});}
 };
 module.exports.config={api:{bodyParser:false}};

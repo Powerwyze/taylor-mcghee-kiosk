@@ -73,8 +73,8 @@
       "includeFiles": "{lib/logos/**,public/assets/logos/**}"
     },
     "api/expanded-photo.js": {
-      "maxDuration": 240,
-      "includeFiles": "{lib/logos/**,public/assets/logos/**}"
+      "maxDuration": 60,
+      "includeFiles": "{lib/logos/**,public/assets/logos/**,public/assets/legacycon-ai-backdrop.png}"
     }
   }
 }

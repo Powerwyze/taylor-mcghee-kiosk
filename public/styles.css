@@ -110,7 +110,6 @@ body.home-screen{background:#50181e}
 #result .qr-panel{text-align:center}
 #result .qr{width:210px;max-width:100%;height:auto;margin:0 auto 12px}
 #result .qr-panel p{font-size:16px;margin:0 0 16px}
-.download-button{display:block;padding:15px 18px;border-radius:10px;background:#e1b777;color:#2b1720;font-weight:700;text-decoration:none;text-align:center;min-height:54px}
 @media(max-width:700px){#result .takeaway{grid-template-columns:1fr}#photoFrame{width:calc(100% + 40px);margin-left:-20px;border-radius:0}#result .takeaway>img{max-height:54vh}}
 
 /* Keep the entire camera preview and shutter together on small screens. */
@@ -120,3 +119,6 @@ body.home-screen{background:#50181e}
 .shell[data-screen="camera"] #voiceStatus{order:1;margin:0}
 .shell[data-screen="camera"] .captions{order:2;flex-basis:100%;max-height:70px;margin:0 auto;text-align:center}
 @media(max-width:700px){.shell[data-screen="camera"] .layout{gap:10px;padding-top:12px}.shell[data-screen="camera"] h1{margin-bottom:12px}.shell[data-screen="camera"] #photoFrame{margin-top:10px;margin-bottom:10px}}
+
+@media(min-width:900px){.legal-memory{max-width:820px}.memory-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(max-width:600px){.memory-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.memory-card{aspect-ratio:3/3.7}.memory-front>span{font-size:8px}}
