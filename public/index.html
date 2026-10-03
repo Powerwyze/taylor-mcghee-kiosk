@@ -13,7 +13,7 @@
  <div id="hostCaptions" class="captions" role="status" aria-live="polite"></div>
  <div id="face" class="avatar" data-avatar="loading"><canvas id="avatar" aria-label="Blueprint, an animated mahogany gavel with gold accents and expressive eyes"></canvas><img id="avatarFallback" src="/assets/blueprint-fallback.svg" alt="Blueprint: a mahogany and gold gavel with friendly eyes and a sounding block"></div>
  <div class="voice-controls"><button id="voiceButton" class="outline">Talk to me</button><button id="voiceStop" class="quiet" hidden>Use buttons / mute</button><button id="audioResume" class="outline" hidden>Enable voice audio</button></div>
- <p id="voiceStatus" class="small" role="status"></p>
+ <p id="avatarGestureStatus" class="small" role="status"></p><p id="voiceStatus" class="small" role="status"></p>
 
 </aside>
 <main>
@@ -52,12 +52,12 @@
 </section>
 <section id="wait" class="screen" hidden>
  <h1>Creating your image…</h1><p id="waitStatus" role="status">Checking your photo.</p><div class="progress" aria-hidden="true"><span></span></div>
- <div id="caseChase" class="case-chase">
- <div class="game-title"><h2>Case Chase</h2><span data-score>0 files · 3 lives</span></div>
- <canvas role="img" aria-label="Law-themed maze: move the gavel, collect case files and avoid red deadline clocks. Use the direction buttons or keyboard arrows."></canvas>
- <p data-status role="status" class="small"></p>
- <button data-play class="primary" type="button">Play Case Chase</button>
- <div class="maze-controls" aria-label="Gavel direction controls"><button type="button" data-dir="up" aria-label="Move up">↑</button><button type="button" data-dir="left" aria-label="Move left">←</button><button type="button" data-dir="down" aria-label="Move down">↓</button><button type="button" data-dir="right" aria-label="Move right">→</button><button type="button" data-pause class="quiet">Pause</button></div>
+ <div id="logoCube" class="logo-cube">
+ <h2>Logo Cube</h2><div data-cube-view class="cube-view"></div>
+ <p class="small" data-cube-status role="status"></p>
+ <p class="small">Drag to look around. Turn a face to rebuild the logos.</p>
+ <label for="cubeFace">Choose a face</label><select id="cubeFace" aria-label="Cube face"></select>
+ <div class="cube-controls"><button type="button" data-clockwise>Turn ↻</button><button type="button" data-counter>Turn ↺</button><button type="button" data-undo>Undo</button><button type="button" data-shuffle>Reshuffle</button></div>
  </div><button id="editContact" class="quiet">Edit details</button>
 </section>
 <section id="review" class="screen" hidden>

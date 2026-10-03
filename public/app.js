@@ -1,4 +1,4 @@
-import {mountGavelMaze} from './gavel-maze.js';
+import {mountLogoCube} from './logo-cube.js';
 import {startCameraPreview,cameraErrorMessage} from './vendor/camera-preview.js';
 import {runCountdown} from './vendor/host-countdown.js';
 import {GuestIdle} from './vendor/host-idle.js';
@@ -46,7 +46,7 @@ const voice=new BlueprintVoice({
 });
 const sentry=new CameraSentry({video:$('sentryVideo'),canGreet:()=>screen==='home'&&!voice.active,onVisitor:async greeting=>{if(screen==='home'){await voice.start(greeting);idle.start(30000);refreshIdle();}},onStatus:(state,message)=>{$('sentryStatus').textContent=message||(state==='watching'?'Camera welcome is watching for a visitor.':state==='off'?'Camera welcome is off.':'Preparing camera welcome…');$('sentryButton').textContent=state==='off'?'Enable camera welcome':'Stop camera welcome';}});
 function stopCamera(){cameraController?.abort();cameraController=null;cameraStream?.getTracks().forEach(t=>t.stop());cameraStream=null;for(const id of ['photoVideo','cardVideo'])$(id).srcObject=null;}
-function reset(manual=true){
+function reset(manual=true){cancelAvatarHold();$('avatarGestureStatus').textContent='';
  version++;controller.abort();controller=new AbortController();cardController?.abort();cardController=null;
  stopCamera();voice.stop();if(manual){sentry.disable();sentryEnabledByOperator=false;}else if(sentry.enabled)sentry.finish({immediate:true});
  generating=false;claimBusy=false;captureBusy=false;attempts=0;gameVersion++;
@@ -156,7 +156,7 @@ async function approve(){
 }
 function retake(){if(protectedWork())return;result=null;contactConfirmed=false;contact=null;attempts=0;if(resultUrl)URL.revokeObjectURL(resultUrl);resultUrl='';openPhoto();}
 function editContact(){if(claimBusy)return;contactConfirmed=false;show('contact');}
-function buildGame(){stopGame?.();stopGame=mountGavelMaze($('caseChase'));}
+function buildGame(){stopGame?.();stopGame=mountLogoCube($('logoCube'));}
 for(const id of ['phoneInput','nameInput','companyInput','emailInput']){$(id).onfocus=()=>keyboardInput=$(id);$(id).oninput=()=>{contactConfirmed=false;idle.touch();};}
 function toggleKeyboard(){const open=$('keyboard').hidden;$('keyboard').hidden=!open;$('keyboardToggle').textContent=open?'Hide touch keyboard':'Show touch keyboard';for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).inputMode=open?'none':id==='phoneInput'?'tel':id==='emailInput'?'email':'text';}
 let shift=false;for(const row of ['1234567890','qwertyuiop','asdfghjkl','zxcvbnm','@._-','SPACE SHIFT LEFT RIGHT DELETE']){const el=document.createElement('div');el.className='key-row';for(const key of row.includes(' ')?row.split(' '):[...row]){const b=document.createElement('button');b.type='button';b.textContent=key;b.onpointerdown=e=>e.preventDefault();b.onclick=()=>{const t=keyboardInput;let start=t.selectionStart??t.value.length,end=t.selectionEnd??start;if(key==='SHIFT'){shift=!shift;b.setAttribute('aria-pressed',shift);return;}if(key==='LEFT'||key==='RIGHT'){const p=Math.max(0,Math.min(t.value.length,start+(key==='LEFT'?-1:1)));t.setSelectionRange(p,p);}else{if(key==='DELETE'&&start===end)start=Math.max(0,start-1);const s=key==='DELETE'?'':key==='SPACE'?' ':shift?key.toUpperCase():key;if(t.value.length-end+start+s.length<=t.maxLength)t.setRangeText(s,start,end,'end');t.dispatchEvent(new Event('input'));}t.focus({preventScroll:true});};el.append(b);}$('keyboard').append(el);}
@@ -170,7 +170,26 @@ $('reviewContact').onclick=editContact;$('editContact').onclick=editContact;
 $('retryPhoto').onclick=()=>{if(generating||attempts>=3||generationErrorCode==='RETAKE')return;generationError='';generationErrorCode='';show('wait');buildGame();generate();};
 $('doneButton').onclick=()=>reset(false);$('resetButton').onclick=()=>reset(true);
 $('voiceButton').onclick=()=>voice.start();$('voiceStop').onclick=()=>voice.stop();$('audioResume').onclick=()=>voice.resumeAudio();
-$('sentryButton').onclick=async()=>{if(sentry.enabled){sentry.disable();sentryEnabledByOperator=false;return;}if(screen!=='home')return;try{await voice.prepareAudio();const m=await navigator.mediaDevices.getUserMedia({audio:true});m.getTracks().forEach(t=>t.stop());sentryEnabledByOperator=true;await sentry.enable();}catch{$('sentryStatus').textContent='Camera welcome needs camera and microphone permission. Touch works without microphone access.';}};
+let sentryToggleBusy=false;
+async function toggleSentry(){
+ if(sentryToggleBusy)return;
+ if(sentry.enabled){sentry.disable();sentryEnabledByOperator=false;$('avatarGestureStatus').textContent='Camera welcome off.';return;}
+ if(screen!=='home'){$('avatarGestureStatus').textContent='Finish this visit or start over to enable camera welcome.';return;}
+ const sentryEpoch=version;sentryToggleBusy=true;$('avatarGestureStatus').textContent='Enabling camera welcome…';
+ try{await voice.prepareAudio();const m=await navigator.mediaDevices.getUserMedia({audio:true});m.getTracks().forEach(t=>t.stop());if(screen!=='home'||sentryEpoch!==version)return;sentryEnabledByOperator=true;await sentry.enable();$('avatarGestureStatus').textContent='Camera welcome on.';}
+ catch{sentryEnabledByOperator=false;$('avatarGestureStatus').textContent='Allow camera and microphone to enable camera welcome.';}
+ finally{sentryToggleBusy=false;}
+}
+$('sentryButton').onclick=toggleSentry;
+const avatarTarget=$('face');avatarTarget.tabIndex=0;avatarTarget.setAttribute('role','button');avatarTarget.setAttribute('aria-label','Hold for one second to toggle camera welcome, or press Enter');
+let holdTimer=null,holdPoint=null;
+function cancelAvatarHold(){clearTimeout(holdTimer);holdTimer=null;holdPoint=null;avatarTarget.classList.remove('sentry-hold');}
+avatarTarget.addEventListener('pointerdown',event=>{if(!event.isPrimary||event.button!==0)return;cancelAvatarHold();holdPoint={x:event.clientX,y:event.clientY};avatarTarget.classList.add('sentry-hold');holdTimer=setTimeout(()=>{cancelAvatarHold();toggleSentry();},1000);});
+avatarTarget.addEventListener('pointermove',event=>{if(holdPoint&&Math.hypot(event.clientX-holdPoint.x,event.clientY-holdPoint.y)>12)cancelAvatarHold();});
+for(const event of ['pointerup','pointercancel','pointerleave','lostpointercapture'])avatarTarget.addEventListener(event,cancelAvatarHold);
+avatarTarget.addEventListener('contextmenu',event=>event.preventDefault());
+avatarTarget.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&!event.repeat){event.preventDefault();toggleSentry();}});
+document.addEventListener('visibilitychange',cancelAvatarHold);
 document.addEventListener('pointerdown',()=>idle.touch());document.addEventListener('keydown',()=>idle.touch());
 document.addEventListener('visibilitychange',()=>{if(document.hidden){sentry.disable();sentryEnabledByOperator=false;reset(true);idle.stop();}});
 window.addEventListener('pagehide',()=>{sentry.disable();reset(true);idle.stop();});
