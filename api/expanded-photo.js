@@ -1,3 +1,4 @@
+const {brandPortrait}=require('../lib/portrait-branding');
 const crypto=require('node:crypto'),sharp=require('sharp');
 const {reply,sameOrigin,upload}=require('../lib/http');
 const {FORMAT,enhancePhoto}=require('../lib/expanded-photo');
@@ -9,8 +10,9 @@ module.exports=async(req,res)=>{
  let stage='upload';const started=Date.now(),timings={};let tick=started;const mark=name=>{const now=Date.now();timings[name]=now-tick;tick=now;};
  try{
   const {bytes,field}=await upload(req);if(field('format')&&field('format')!==FORMAT.id)return reply(res,400,{error:'Choose the photo booth.'});
-  stage='enhance';const final=(await enhancePhoto(bytes)).jpeg;
-  mark('enhance');const finalSize=await sharp(final).metadata();stage='storage';const id=photoId(),claim=crypto.randomBytes(32).toString('base64url');
+  stage='enhance';const enhanced=(await enhancePhoto(bytes)).jpeg;
+  mark('enhance');stage='branding';const final=await brandPortrait(enhanced,FORMAT.id);
+  mark('branding');const finalSize=await sharp(final).metadata();stage='storage';const id=photoId(),claim=crypto.randomBytes(32).toString('base64url');
   await savePhotoRecord({id,jpeg:final,phoneHash:'',look:'natural-photo',claimHash:hashToken(claim)});
   mark('storage');console.info('image_timing',JSON.stringify({format:FORMAT.id,mode:'natural-photo',...timings,total:Date.now()-started}));res.setHeader('Server-Timing',Object.entries(timings).map(([k,v])=>k+';dur='+v).join(', '));
   res.statusCode=200;res.setHeader('Cache-Control','no-store');res.setHeader('Content-Type','image/jpeg');

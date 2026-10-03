@@ -7,7 +7,7 @@ const source=await readFile('tests/fixtures/person.jpg');
 const form=new FormData();form.append('image',new Blob([source],{type:'image/jpeg'}),'fixture.jpg');form.append('format','expanded');
 const response=await fetch(base+'/api/expanded-photo',{method:'POST',headers:{Origin:base},body:form,signal:AbortSignal.timeout(235000)});
 if(!response.ok)throw Error('Generation failed: '+response.status+' '+JSON.stringify(await response.json().catch(()=>({}))));
-const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.ok(meta.width<=1920&&meta.height<=1920&&meta.width>=800&&meta.height>=800);const original=await sharp(source).metadata();assert.ok(Math.abs(meta.width/meta.height-original.width/original.height)<.01);assert.equal(response.headers.get('X-Photo-Process'),'lighting-only');assert.ok(jpeg.length>10000);
+const jpeg=Buffer.from(await response.arrayBuffer());const meta=await sharp(jpeg).metadata();assert.ok(meta.width<=1920&&meta.height<=2060&&meta.width>=800&&meta.height>=800);const original=await sharp(source).metadata();const footer=Math.max(64,Math.min(140,Math.round(meta.width*.09)));assert.ok(Math.abs(meta.width/(meta.height-footer)-original.width/original.height)<.01);assert.equal(response.headers.get('X-Photo-Process'),'lighting-only');assert.ok(jpeg.length>10000);
 await writeFile('artifacts/live-expanded-photo.jpg',jpeg);
 const id=response.headers.get('X-Photo-Id'),claim=response.headers.get('X-Claim-Token');assert.ok(id&&claim);
 const wrong=await fetch(base+'/p/'+id+'?token=wrong');assert.equal(wrong.status,404,'QR link requires approval token');
