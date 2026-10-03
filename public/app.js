@@ -51,7 +51,7 @@ function reset(manual=true){
  for(const url of [sourceUrl,resultUrl])if(url)URL.revokeObjectURL(url);
  source=null;result=null;sourceUrl='';resultUrl='';format='';role='';contactConfirmed=false;contact=null;generationError='';generationErrorCode='';
  for(const id of ['phoneInput','nameInput','companyInput','emailInput'])$(id).value='';
- for(const id of ['sourceImage','reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
+ for(const id of ['reviewImage','resultImage','qrImage'])$(id).removeAttribute('src');
  $('optionalDetails').open=false;$('shortLink').textContent='';$('contactError').textContent='';$('claimError').textContent='';$('cardSummary').textContent='';$('countdown').hidden=true;
  $('approvePhoto').disabled=false;$('contactConfirm').disabled=false;$('readCard').disabled=false;
  show('home');idle.start(150000);$('hostCaptions').textContent='';
@@ -132,9 +132,9 @@ async function generate(){
 function phoneValue(s){let n=String(s).replace(/\D/g,'');if(n.length===11&&n[0]==='1')n=n.slice(1);return /^[2-9]\d{2}[2-9]\d{6}$/.test(n)?n:'';}
 function advance(){
  if(!contactConfirmed)return;
- if(result){$('sourceImage').src=sourceUrl;$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;$('regeneratePhoto').disabled=attempts>=3;show('review');gameVersion++;return;}
+ if(result){$('reviewImage').src=resultUrl;$('photoNotice').textContent=result.notice;$('regeneratePhoto').disabled=attempts>=3;show('review');gameVersion++;return;}
  if(generationError){$('errorMessage').textContent=generationError;$('retryPhoto').hidden=generationErrorCode==='RETAKE';$('retryPhoto').disabled=attempts>=3;show('errorScreen');return;}
- show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, offer one brief optional question and listen. Do not recite private details.',true);
+ show('wait');buildGame();voice.note('Contact details were confirmed on screen. While generation continues, use your researched RPB Law Firm and BPN LegacyCon context: ask one brief optional question about their goals, then listen and tailor a short relevant fact to their answer. Do not recite private details.',true);
 }
 $('contactForm').onsubmit=e=>{
  e.preventDefault();const phone=phoneValue($('phoneInput').value),email=$('emailInput').value.trim();

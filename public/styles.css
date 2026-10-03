@@ -35,3 +35,6 @@ details[open]>summary{margin-bottom:8px}.booth-options{margin:0;max-width:440px}
 .shell[data-format="banner"] #sourceImage{height:180px}
 .shell[data-format="banner"] .takeaway{grid-template-columns:1fr}
 .shell[data-format="profile"] #reviewImage,.shell[data-format="profile"] #resultImage{aspect-ratio:1/1;object-fit:contain}
+
+/* Reveal only the finished professional portrait. */
+.comparison{grid-template-columns:1fr}.comparison img{height:auto;max-height:640px;object-fit:contain}

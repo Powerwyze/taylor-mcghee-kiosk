@@ -20,7 +20,7 @@ try{
  assert.equal(await page.locator('#phoneInput').inputValue(),'2025550123','voice failure preserves contact draft');
  await page.locator('#contactConfirm').click();await page.locator('#matchGrid').waitFor({state:'visible'});assert.equal(claims,0);await page.screenshot({path:'artifacts/portrait-wait.png',fullPage:true});
  release();await page.locator('#approvePhoto').waitFor({state:'visible'});assert.equal(claims,0,'QR not claimed before likeness approval');
- await page.screenshot({path:'artifacts/portrait-review.png',fullPage:true});await page.locator('#approvePhoto').click();await page.locator('#qrImage').waitFor({state:'visible'});assert.equal(claims,1);
+ assert.equal(await page.locator('#sourceImage').count(),0,'original photo is not displayed');await page.screenshot({path:'artifacts/portrait-review.png',fullPage:true});await page.locator('#approvePhoto').click();await page.locator('#qrImage').waitFor({state:'visible'});assert.equal(claims,1);
  await page.locator('#doneButton').click();assert.equal(await page.locator('#phoneInput').inputValue(),'');assert.equal(await page.locator('#nameInput').inputValue(),'');assert.equal(await page.locator('#resultImage').getAttribute('src'),null);
  await page.setViewportSize({width:390,height:844});await page.reload();await page.screenshot({path:'artifacts/mobile-home.png',fullPage:true});
  await page.locator('[data-format=profile].format-choice').click();await page.locator('#skipCard').click();await page.locator('[data-role=bluecollar]').click();await page.waitForFunction(()=>!document.getElementById('takePhoto').disabled);await page.locator('#takePhoto').click();await page.locator('#contactForm').waitFor({state:'visible'});
