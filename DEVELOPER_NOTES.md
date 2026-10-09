@@ -1,3 +1,6 @@
+# Retired OpenAI model defaults — October 9, 2026
+gpt-image-1 shuts down on October 23, 2026. Unset OPENAI_IMAGE_MODEL falls back to gpt-image-2.5-flare. The portrait pipeline still defaults to gpt-image-2 through OPENAI_PORTRAIT_MODEL. GPT Image 2 and GPT Image 2.5 omit input_fidelity; the edit request sends it only for GPT Image 1 and 1.5 model ids.
+
 # Current image-generation behavior — October 2 correction
 The user reported that the flat original-photo fallback did nothing. Do not silently replace generated edits with this fallback. The dedicated portrait pipeline now uses OPENAI_PORTRAIT_MODEL (default gpt-image-2) through the existing Vercel OPENAI_API_KEY, retaining quota-only OPENAI_BACKUP. No credentials were retrieved or replaced. The old OPENAI_IMAGE_MODEL remains for legacy endpoints.
 GPT Image 2 uses automatic high input fidelity; omit the unsupported input_fidelity parameter. Banner generation uses 1584×528. The full generated frame is scaled to 1188×396 and right-aligned, then its quiet left background is extended with a mirrored 396px panel to produce 1584×396 without cropping the portrait. The prompt requires the whole head with generous margin. Other format dimensions remain unchanged.
@@ -26,7 +29,7 @@ Voice: exact gpt-live-1, marin, WebRTC /v1/live/sessions; separate gpt-5.6-luna 
 Optional camera welcome uses local MediaPipe person detection and a single recent frame for a greeting. Operator enables once. Manual reset/Stop/page hide stop it; idle reset can rearm only when still enabled. Guest-only inactivity: 30 seconds live voice; 150 seconds touch, paused while work is pending.
 
 ## Provider and storage configuration
-Existing project primary OPENAI_API_KEY preserved. Authorized shared OPENAI_BACKUP linked Production/Preview. One backup retry only for confirmed quota/credit errors; original payload and deadline preserved. OPENAI_IMAGE_MODEL defaults gpt-image-1; OPENAI_VISION_MODEL defaults gpt-4.1-mini. No secrets in browser/source/logs.
+Existing project primary OPENAI_API_KEY preserved. Authorized shared OPENAI_BACKUP linked Production/Preview. One backup retry only for confirmed quota/credit errors; original payload and deadline preserved. OPENAI_IMAGE_MODEL defaults gpt-image-2.5-flare; OPENAI_VISION_MODEL defaults gpt-4.1-mini. No secrets in browser/source/logs.
 BLOB_READ_WRITE_TOKEN stores branded photo, encrypted contact records and metadata. Pending photos have no phoneHash and cannot unlock until a 256-bit claim capability plus explicit touch confirmations binds the number. Claim retries use deterministic lead ID and do not authorize different numbers. Existing QR and phone-unlock routes retained for older photos.
 QR delivery only; no photo emails, no SMS messages or marketing campaigns. Email is merely an optional contact field. Client terms/SMS program configuration must be resolved before marketing opt-in is offered again.
 
