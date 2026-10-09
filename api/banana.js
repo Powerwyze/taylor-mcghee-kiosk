@@ -52,7 +52,7 @@ async function compressGuest(buffer) {
 async function editImage({ prompt, fileBuffer }) {
   const { openaiRequest } = require('../lib/openai-request');
   const fd = new FormData();
-  fd.append('model', process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1');
+  fd.append('model', process.env.OPENAI_IMAGE_MODEL || 'gpt-image-2.5-flare');
   fd.append('prompt', prompt);
   fd.append('size', process.env.OPENAI_IMAGE_SIZE || '1024x1536');
   fd.append('quality', process.env.OPENAI_IMAGE_QUALITY || 'medium');
